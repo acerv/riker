@@ -19,6 +19,8 @@ add_project_arguments([
     ], language : 'c'
 )
 
+riker_api = include_directories('.')
+
 install_headers('riker.h')
 
 my_library = library(
@@ -26,6 +28,7 @@ my_library = library(
     'riker.c',
     install : true,
     install_dir : 'lib',
+    include_directories: riker_api
 )
 
 if get_option('build_tests')
