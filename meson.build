@@ -31,6 +31,11 @@ my_library = library(
     include_directories: riker_api
 )
 
+riker = declare_dependency(
+    include_directories: riker_api,
+    link_with: [my_library]
+)
+
 if get_option('build_tests')
     test_exec = executable(
         'test_riker',
