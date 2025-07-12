@@ -202,6 +202,7 @@ do { \
  */
 #define rk_error(arg_fmt, ...) \
 	rk_result_(__FILE__, __LINE__, TERROR, (arg_fmt), ##__VA_ARGS__)
+
 /**
  * @brief Verify that `expr` is satisfied.
  *
@@ -345,6 +346,50 @@ do { \
 			#s1, #s2, #s1, s1, #s2, s2); \
 	} else { \
 		rk_result(TFAIL, "%s != %s", #s1, #s2); \
+	} \
+} while(0)
+
+/**
+ * @brief Verify that pointers are in the same address.
+ *
+ * Recognize that `ptr1` is equal to `ptr2 and return a TPASS message if true.
+ * TFAIL otherwise.
+ *
+ * @param ptr1 A pointer.
+ * @param ptr2 A pointer.
+ */
+#define rk_check_eq_ptr(ptr1, ptr2) \
+do { \
+	if (ptr1 == ptr2) { \
+		rk_result(TPASS, "%s (0x%p) == %s (0x%p)", \
+			#ptr1, (void *)ptr1, \
+			#ptr2, (void *)ptr2); \
+	} else { \
+		rk_result(TFAIL, "%s (0x%p) != %s (0x%p)", \
+			#ptr1, (void *)ptr1, \
+			#ptr2, (void *)ptr2); \
+	} \
+} while(0)
+
+/**
+ * @brief Verify that pointers are not equal.
+ *
+ * Recognize that `ptr1` is equal to `ptr2 and return a TFAIL message if true.
+ * TPASS otherwise.
+ *
+ * @param ptr1 A pointer.
+ * @param ptr2 A pointer.
+ */
+#define rk_check_ne_ptr(ptr1, ptr2) \
+do { \
+	if (ptr1 != ptr2) { \
+		rk_result(TPASS, "%s (0x%p) != %s (0x%p)", \
+			#ptr1, (void *)ptr1, \
+			#ptr2, (void *)ptr2); \
+	} else { \
+		rk_result(TFAIL, "%s (0x%p) == %s (0x%p)", \
+			#ptr1, (void *)ptr1, \
+			#ptr2, (void *)ptr2); \
 	} \
 } while(0)
 
