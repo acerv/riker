@@ -114,17 +114,17 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 do { \
 	if (buf_size > 0) { \
 		ret = (size_t)_Generic((num), \
-		    int: snprintf(buf, buf_size, "%d", (int)num), \
-		    short: snprintf(buf, buf_size, "%hd", (short)num), \
-		    long: snprintf(buf, buf_size, "%ld", (long)num), \
-		    long long: snprintf(buf, buf_size, "%lld", (long long)num), \
-		    float: snprintf(buf, buf_size, "%.6f", (double)num), \
-		    double: snprintf(buf, buf_size, "%.6lf", (double)num), \
-		    long double: snprintf(buf, buf_size, "%.6Lf", (long double)num), \
-		    unsigned int: snprintf(buf, buf_size, "%u", (unsigned int)num), \
-		    unsigned short: snprintf(buf, buf_size, "%hu", (unsigned short)num), \
-		    unsigned long: snprintf(buf, buf_size, "%lu", (unsigned long)num), \
-		    unsigned long long: snprintf(buf, buf_size, "%llu", (unsigned long long)num) \
+		    int: snprintf(buf, buf_size, "%d", (int)(num)), \
+		    short: snprintf(buf, buf_size, "%hd", (short)(num)), \
+		    long: snprintf(buf, buf_size, "%ld", (long)(num)), \
+		    long long: snprintf(buf, buf_size, "%lld", (long long)(num)), \
+		    float: snprintf(buf, buf_size, "%.6f", (double)(num)), \
+		    double: snprintf(buf, buf_size, "%.6lf", (double)(num)), \
+		    long double: snprintf(buf, buf_size, "%.6Lf", (long double)(num)), \
+		    unsigned int: snprintf(buf, buf_size, "%u", (unsigned int)(num)), \
+		    unsigned short: snprintf(buf, buf_size, "%hu", (unsigned short)(num)), \
+		    unsigned long: snprintf(buf, buf_size, "%lu", (unsigned long)(num)), \
+		    unsigned long long: snprintf(buf, buf_size, "%llu", (unsigned long long)(num)) \
 		); \
 	} \
 } while(0)
@@ -167,7 +167,7 @@ do { \
 
 #define RK_CHECK_NUM_(a, b, op) \
 do { \
-	int ttype__ = (a op b) ? TPASS : TFAIL; \
+	int ttype__ = ((a) op (b)) ? TPASS : TFAIL; \
 	if (ttype__ == TFAIL) { \
 		char buf__[4096] = {0}; \
 		size_t buf_size__ = 4096; \
@@ -288,11 +288,11 @@ do { \
  */
 #define rk_check_ptr_null(ptr) \
 do { \
-	if (!ptr) { \
+	const void *_ck_ptr = (ptr); \
+	if (!_ck_ptr) \
 		rk_result(TPASS, "%s == NULL", #ptr); \
-	} else { \
-		rk_result(TFAIL, "%s == NULL (0x%p)", #ptr, (void *)ptr); \
-	} \
+	else \
+		rk_result(TFAIL, "%s == NULL (0x%p)", #ptr, _ck_ptr); \
 } while(0)
 
 /**
@@ -304,48 +304,96 @@ do { \
  */
 #define rk_check_ptr_not_null(ptr) \
 do { \
-	if (ptr) { \
-		rk_result(TPASS, "%s != NULL (0x%p)", #ptr, (void *)ptr); \
-	} else { \
+	const void *_ck_ptr = (ptr); \
+	if (_ck_ptr) \
+		rk_result(TPASS, "%s != NULL (0x%p)", #ptr, _ck_ptr); \
+	else \
 		rk_result(TFAIL, "%s != NULL", #ptr); \
-	} \
 } while(0)
 
 /**
  * @brief Verify that two memories contain the same data. 
  *
- * Verify that `s1` and `s2` contains the same data.
+ * Verify that `m1` and `m2` contains the same data.
  *
- * @param s1 First pointer to some memory data.
- * @param s2 Second pointer to some memory data.
+ * @param m1 First pointer to some memory data.
+ * @param m2 Second pointer to some memory data.
  * @param n Length of data.
  */
-#define rk_check_mem_eq(s1, s2, n) \
+#define rk_check_mem_eq(m1, m2, n) \
 do { \
-	if (!memcmp(s1, s2, n)) { \
-		rk_result(TPASS, "%s == %s", #s1, #s2); \
-	} else { \
-		rk_result(TPASS, "%s == %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, s1, #s2, s2); \
-	} \
+	const void *_ck_m1 = (m1); \
+	const void *_ck_m2 = (m2); \
+	size_t _ck_n = (size_t)(n); \
+	if (!memcmp(_ck_m1, _ck_m2, _ck_n)) \
+		rk_result(TPASS, "%s == %s", #m1, #m2); \
+	else \
+		rk_result(TFAIL, "%s != %s", #m1, #m2); \
 } while(0)
 
 /**
  * @brief Verify that two memories doesn't contain the same data. 
  *
- * Verify that `s1` and `s2` doesn't contains the same data.
+ * Verify that `m1` and `m2` doesn't contains the same data.
  *
- * @param s1 First pointer to some memory data.
- * @param s2 Second pointer to some memory data.
+ * @param m1 First pointer to some memory data.
+ * @param m2 Second pointer to some memory data.
  * @param n Length of data.
  */
-#define rk_check_mem_not_eq(s1, s2, n) \
+#define rk_check_mem_not_eq(m1, m2, n) \
 do { \
-	if (memcmp(s1, s2, n)) { \
-		rk_result(TPASS, "%s != %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, s1, #s2, s2); \
+	const void *_ck_m1 = (m1); \
+	const void *_ck_m2 = (m2); \
+	size_t _ck_n = (size_t)(n); \
+	if (memcmp(_ck_m1, _ck_m2, _ck_n)) \
+		rk_result(TPASS, "%s != %s", #m1, #m2); \
+	else \
+		rk_result(TFAIL, "%s == %s", #m1, #m2); \
+} while(0)
+
+/**
+ * @brief Verify that two strings contain the same data. 
+ *
+ * Verify that `s1` and `s2` contains the same data.
+ *
+ * @param s1 First pointer to some string data.
+ * @param s2 Second pointer to some string data.
+ * @param n Length of data.
+ */
+#define rk_check_str_eq(s1, s2, n) \
+do { \
+	const char *_ck_s1 = (s1); \
+	const char *_ck_s2 = (s2); \
+	size_t _ck_n = (size_t)(n); \
+	if (!memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+		rk_result(TPASS, "%s == %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
 	} else { \
-		rk_result(TFAIL, "%s != %s", #s1, #s2); \
+		rk_result(TFAIL, "%s != %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} \
+} while(0)
+
+/**
+ * @brief Verify that two strings don't contain the same data. 
+ *
+ * Verify that `s1` and `s2` don't contains the same data.
+ *
+ * @param s1 First pointer to some string data.
+ * @param s2 Second pointer to some string data.
+ * @param n Length of data.
+ */
+#define rk_check_str_not_eq(s1, s2, n) \
+do { \
+	const char *_ck_s1 = (s1); \
+	const char *_ck_s2 = (s2); \
+	size_t _ck_n = (size_t)(n); \
+	if (memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+		rk_result(TPASS, "%s != %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} else { \
+		rk_result(TFAIL, "%s == %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
 	} \
 } while(0)
 
@@ -360,14 +408,16 @@ do { \
  */
 #define rk_check_eq_ptr(ptr1, ptr2) \
 do { \
-	if (ptr1 == ptr2) { \
+	const void *_rk_ptr1 = (ptr1); \
+	const void *_rk_ptr2 = (ptr2); \
+	if (_rk_ptr1 == _rk_ptr2) { \
 		rk_result(TPASS, "%s (0x%p) == %s (0x%p)", \
-			#ptr1, (void *)ptr1, \
-			#ptr2, (void *)ptr2); \
+			#ptr1, _rk_ptr1, \
+			#ptr2, _rk_ptr2); \
 	} else { \
 		rk_result(TFAIL, "%s (0x%p) != %s (0x%p)", \
-			#ptr1, (void *)ptr1, \
-			#ptr2, (void *)ptr2); \
+			#ptr1, _rk_ptr1, \
+			#ptr2, _rk_ptr2); \
 	} \
 } while(0)
 
@@ -382,14 +432,16 @@ do { \
  */
 #define rk_check_ne_ptr(ptr1, ptr2) \
 do { \
-	if (ptr1 != ptr2) { \
+	const void *_rk_ptr1 = (ptr1); \
+	const void *_rk_ptr2 = (ptr2); \
+	if (_rk_ptr1 != _rk_ptr2) { \
 		rk_result(TPASS, "%s (0x%p) != %s (0x%p)", \
-			#ptr1, (void *)ptr1, \
-			#ptr2, (void *)ptr2); \
+			#ptr1, _rk_ptr1, \
+			#ptr2, _rk_ptr2); \
 	} else { \
 		rk_result(TFAIL, "%s (0x%p) == %s (0x%p)", \
-			#ptr1, (void *)ptr1, \
-			#ptr2, (void *)ptr2); \
+			#ptr1, _rk_ptr1, \
+			#ptr2, _rk_ptr2); \
 	} \
 } while(0)
 

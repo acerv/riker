@@ -158,10 +158,40 @@ static void test_rk_check_mem_eq(void)
 	rk_check_mem_eq(s1, s3, 4);
 }
 
+static void test_rk_check_mem_not_eq(void)
+{
+	const char *s1 = "ciao";
+	const char *s2 = "ciao";
+	const char *s3 = "cia0";
+
+	rk_check_mem_not_eq(s1, s2, 4);
+	rk_check_mem_not_eq(s1, s3, 4);
+}
+
+static void test_rk_check_str_eq(void)
+{
+	const char *s1 = "ciao";
+	const char *s2 = "ciao";
+	const char *s3 = "cia0";
+
+	rk_check_str_eq(s1, s2, 4);
+	rk_check_str_eq(s1, s3, 4);
+}
+
+static void test_rk_check_str_not_eq(void)
+{
+	const char *s1 = "ciao";
+	const char *s2 = "ciao";
+	const char *s3 = "cia0";
+
+	rk_check_str_not_eq(s1, s2, 4);
+	rk_check_str_not_eq(s1, s3, 4);
+}
+
 static void test_rk_check_eq_ptr(void)
 {
 	const char *s1 = "ciao";
-	char *s2 = s1;
+	const char *s2 = s1;
 
 	rk_check_eq_ptr(s1, s2);
 }
@@ -172,6 +202,14 @@ static void test_rk_check_ne_ptr(void)
 	const char *s2 = "ciao2";
 
 	rk_check_ne_ptr(s1, s2);
+}
+
+static void test_rk_check_assignment(void)
+{
+	int a = 10;
+	int b;
+
+	rk_check_eq(a, b = 11);
 }
 
 static void test_timeout(void)
@@ -215,12 +253,16 @@ static rk_suite_t test_suite = {
 		{ .run = test_rk_check_ptr_null },
 		{ .run = test_rk_check_ptr_not_null },
 		{ .run = test_rk_check_mem_eq },
+		{ .run = test_rk_check_mem_not_eq },
+		{ .run = test_rk_check_str_eq },
+		{ .run = test_rk_check_str_not_eq },
 		{ .run = test_rk_check_eq_ptr },
 		{ .run = test_rk_check_ne_ptr },
 		{
 			.run = test_timeout,
 			.timeout = 1,
 		},
+		{ .run = test_rk_check_assignment },
 		{ .run = NULL },
 	},
 	.setup = setup_suite,
