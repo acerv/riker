@@ -12,6 +12,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+/** @brief Latest test result. This is set all the times we call `rk_result`. */
+static int RK_TST_RES;
+
 /**
  * @brief Test result type.
  *
@@ -188,8 +191,11 @@ do { \
  * @param arg_fmt String to print, including string formatters.
  * @param va_args Arguments for the printf().
  */
-#define rk_result(ttype, arg_fmt, ...) \
-	rk_result_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__)
+#define rk_result(ttype, arg_fmt, ...) do { \
+	if (ttype != TINFO) \
+		RK_TST_RES = ttype; \
+	rk_result_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__); \
+} while (0)
 
 /**
  * @brief Send an error message to stderr and close the current session.
@@ -200,8 +206,10 @@ do { \
  * @param arg_fmt String to print, including string formatters.
  * @param va_args Arguments for the printf().
  */
-#define rk_error(arg_fmt, ...) \
-	rk_result_(__FILE__, __LINE__, TERROR, (arg_fmt), ##__VA_ARGS__)
+#define rk_error(arg_fmt, ...) do { \
+	RK_TST_RES = TERROR; \
+	rk_result_(__FILE__, __LINE__, TERROR, (arg_fmt), ##__VA_ARGS__); \
+} while (0)
 
 /**
  * @brief Verify that `expr` is satisfied.
