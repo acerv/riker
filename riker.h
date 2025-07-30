@@ -121,7 +121,7 @@ do { \
 		    short: snprintf(buf, buf_size, "%hd", (short)(num)), \
 		    long: snprintf(buf, buf_size, "%ld", (long)(num)), \
 		    long long: snprintf(buf, buf_size, "%lld", (long long)(num)), \
-		    float: snprintf(buf, buf_size, "%.6f", (double)(num)), \
+		    float: snprintf(buf, buf_size, "%.6f", (float)(num)), \
 		    double: snprintf(buf, buf_size, "%.6lf", (double)(num)), \
 		    long double: snprintf(buf, buf_size, "%.6Lf", (long double)(num)), \
 		    unsigned int: snprintf(buf, buf_size, "%u", (unsigned int)(num)), \
