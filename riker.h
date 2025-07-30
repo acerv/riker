@@ -170,7 +170,7 @@ do { \
 
 #define RK_CHECK_NUM_(a, b, op) \
 do { \
-	int ttype__ = ((a) op (b)) ? TPASS : TFAIL; \
+	int ttype__ = (((a) op (b)) ? TPASS : TFAIL); \
 	if (ttype__ == TFAIL) { \
 		char buf__[4096] = {0}; \
 		size_t buf_size__ = 4096; \
@@ -219,7 +219,7 @@ do { \
  * @param expr An expression that has to be satisfied.
  */
 #define rk_check_expr(expr) \
-	rk_result((expr) ? TPASS : TFAIL, "%s", #expr)
+	rk_result(((expr) ? TPASS : TFAIL), "%s", #expr)
 
 /**
  * @brief Verify that two numbers are equal.
