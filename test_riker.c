@@ -188,16 +188,16 @@ static void test_rk_check_mem_eq(void)
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
-static void test_rk_check_mem_not_eq(void)
+static void test_rk_check_mem_ne(void)
 {
 	const char *s1 = "ciao";
 	const char *s2 = "cia0";
 	const char *s3 = "ciao";
 
-	rk_check_mem_not_eq(s1, s2, 4);
+	rk_check_mem_ne(s1, s2, 4);
 	rk_check_eq(RK_TST_RES, TPASS);
 
-	rk_check_mem_not_eq(s1, s3, 4);
+	rk_check_mem_ne(s1, s3, 4);
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
@@ -214,16 +214,16 @@ static void test_rk_check_str_eq(void)
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
-static void test_rk_check_str_not_eq(void)
+static void test_rk_check_str_ne(void)
 {
 	const char *s1 = "ciao";
 	const char *s2 = "cia0";
 	const char *s3 = "ciao";
 
-	rk_check_str_not_eq(s1, s2, 4);
+	rk_check_str_ne(s1, s2, 4);
 	rk_check_eq(RK_TST_RES, TPASS);
 
-	rk_check_str_not_eq(s1, s3, 4);
+	rk_check_str_ne(s1, s3, 4);
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
@@ -232,16 +232,16 @@ static void test_rk_check_eq_ptr(void)
 	const char *s1 = "ciao";
 	const char *s2 = s1;
 
-	rk_check_eq_ptr(s1, s2);
+	rk_check_ptr_eq(s1, s2);
 	rk_check_eq(RK_TST_RES, TPASS);
 }
 
-static void test_rk_check_ne_ptr(void)
+static void test_rk_check_ptr_ne(void)
 {
 	const char *s1 = "ciao";
 	const char *s2 = "ciao1";
 
-	rk_check_ne_ptr(s1, s2);
+	rk_check_ptr_ne(s1, s2);
 	rk_check_eq(RK_TST_RES, TPASS);
 }
 
@@ -295,11 +295,11 @@ static rk_suite_t test_suite = {
 		{ .run = test_rk_check_ptr_null },
 		{ .run = test_rk_check_ptr_not_null },
 		{ .run = test_rk_check_mem_eq },
-		{ .run = test_rk_check_mem_not_eq },
+		{ .run = test_rk_check_mem_ne },
 		{ .run = test_rk_check_str_eq },
-		{ .run = test_rk_check_str_not_eq },
+		{ .run = test_rk_check_str_ne },
 		{ .run = test_rk_check_eq_ptr },
-		{ .run = test_rk_check_ne_ptr },
+		{ .run = test_rk_check_ptr_ne },
 		{
 			.run = test_timeout,
 			.timeout = 1,

@@ -348,7 +348,7 @@ do { \
  * @param m2 Second pointer to some memory data.
  * @param n Length of data.
  */
-#define rk_check_mem_not_eq(m1, m2, n) \
+#define rk_check_mem_ne(m1, m2, n) \
 do { \
 	const void *_ck_m1 = (m1); \
 	const void *_ck_m2 = (m2); \
@@ -391,7 +391,7 @@ do { \
  * @param s2 Second pointer to some string data.
  * @param n Length of data.
  */
-#define rk_check_str_not_eq(s1, s2, n) \
+#define rk_check_str_ne(s1, s2, n) \
 do { \
 	const char *_ck_s1 = (s1); \
 	const char *_ck_s2 = (s2); \
@@ -414,7 +414,7 @@ do { \
  * @param ptr1 A pointer.
  * @param ptr2 A pointer.
  */
-#define rk_check_eq_ptr(ptr1, ptr2) \
+#define rk_check_ptr_eq(ptr1, ptr2) \
 do { \
 	const void *_rk_ptr1 = (ptr1); \
 	const void *_rk_ptr2 = (ptr2); \
@@ -438,7 +438,7 @@ do { \
  * @param ptr1 A pointer.
  * @param ptr2 A pointer.
  */
-#define rk_check_ne_ptr(ptr1, ptr2) \
+#define rk_check_ptr_ne(ptr1, ptr2) \
 do { \
 	const void *_rk_ptr1 = (ptr1); \
 	const void *_rk_ptr2 = (ptr2); \
