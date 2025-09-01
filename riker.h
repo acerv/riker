@@ -113,22 +113,31 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		__attribute__ ((format (printf, 4, 5)));
 
 #if __STDC_VERSION__ >= 201112L
+
+#define RK_PRINT_FMT_(...) \
+	_Generic((__VA_ARGS__), \
+		char*: "%s", \
+		char: "%c", \
+		signed char: "%hhi", \
+		short: "%hi", \
+		int: "%i", \
+		long: "%li", \
+		long long: "%lli", \
+		unsigned char: "%hhu", \
+		unsigned short: "%hi", \
+		unsigned int: "%u", \
+		unsigned long: "%lu", \
+		unsigned long long: "%llu", \
+		float: "%g", \
+		double: "%g", \
+		long double: "%Lg", \
+		default: "%p")
+
 #define RK_SNPRINTF_NUM_(ret, buf, buf_size, num) \
 do { \
 	if (buf_size > 0) { \
-		ret = (size_t)_Generic((num), \
-		    int: snprintf(buf, buf_size, "%d", (int)(num)), \
-		    short: snprintf(buf, buf_size, "%hd", (short)(num)), \
-		    long: snprintf(buf, buf_size, "%ld", (long)(num)), \
-		    long long: snprintf(buf, buf_size, "%lld", (long long)(num)), \
-		    float: snprintf(buf, buf_size, "%.6f", (float)(num)), \
-		    double: snprintf(buf, buf_size, "%.6lf", (double)(num)), \
-		    long double: snprintf(buf, buf_size, "%.6Lf", (long double)(num)), \
-		    unsigned int: snprintf(buf, buf_size, "%u", (unsigned int)(num)), \
-		    unsigned short: snprintf(buf, buf_size, "%hu", (unsigned short)(num)), \
-		    unsigned long: snprintf(buf, buf_size, "%lu", (unsigned long)(num)), \
-		    unsigned long long: snprintf(buf, buf_size, "%llu", (unsigned long long)(num)) \
-		); \
+		ret = (size_t) snprintf(buf, buf_size, \
+			  RK_PRINT_FMT_((num)), (num)); \
 	} \
 } while(0)
 
