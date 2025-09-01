@@ -60,7 +60,7 @@ typedef void (*rk_test_func)(void);
  *
  * This struct has to be initialized in order to declare a test.
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
 	/** @brief Setup function executed before `run`. */
 	rk_test_func setup;

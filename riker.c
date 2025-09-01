@@ -36,7 +36,7 @@ typedef enum
 	TEST_TEARDOWN,
 } rk_session_state_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
 	size_t passed;
 	size_t failed;
