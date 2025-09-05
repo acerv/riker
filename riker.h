@@ -60,7 +60,7 @@ typedef void (*rk_test_func)(void);
  *
  * This struct has to be initialized in order to declare a test.
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
 	/** @brief Setup function executed before `run`. */
 	rk_test_func setup;
@@ -68,8 +68,6 @@ typedef struct __attribute__((packed))
 	rk_test_func teardown;
 	/** @brief Test to execute. */
 	rk_test_func run;
-	/** @brief Test timeout in seconds. */
-	unsigned int timeout;
 } rk_test_t;
 
 /**
@@ -85,7 +83,6 @@ typedef struct __attribute__((packed))
  *			.run = test2,
  *			.setup = setup1,
  *			.teardown = teardown1
- *			.timeout = 20,
  *		},
  *		{ .run = test2 },
  *		{ NULL },

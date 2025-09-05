@@ -254,12 +254,6 @@ static void test_rk_check_assignment(void)
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
-static void test_timeout(void)
-{
-	rk_result(TINFO, "Waiting for timeout..");
-	sleep(3);
-}
-
 static rk_suite_t test_suite = {
 	.tests = (rk_test_t []) {
 		{
@@ -300,10 +294,6 @@ static rk_suite_t test_suite = {
 		{ .run = test_rk_check_str_ne },
 		{ .run = test_rk_check_eq_ptr },
 		{ .run = test_rk_check_ptr_ne },
-		{
-			.run = test_timeout,
-			.timeout = 1,
-		},
 		{ .run = test_rk_check_assignment },
 		{ .run = NULL },
 	},

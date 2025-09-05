@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
@@ -115,56 +114,6 @@ static void run_test(rk_test_t *test)
 	}
 }
 
-static void fork_run_test(rk_test_t *test)
-{
-	int ret;
-	int status;
-	pid_t test_pid;
-	time_t start_time;
-	bool killed = false;
-	unsigned int timeout;
-
-	assert(test);
-
-	test_pid = fork();
-	if (test_pid < 0)
-		rk_error("fork() error: %s\n", strerror(errno));
-
-	if (!test_pid) {
-		run_test(test);
-		exit(0);
-	}
-
-	timeout = test->timeout ? test->timeout: 600;
-	start_time = time(NULL);
-
-	while (1) {
-		if (difftime(time(NULL), start_time) >= timeout) {
-			rk_result(TINFO, "Test timed out. Kill the process.");
-			kill(test_pid, SIGKILL);
-			killed = true;
-			break;
-		}
-
-		ret = waitpid(test_pid, &status, WNOHANG);
-		if (ret > 0 && WIFEXITED(status))
-			break;
-
-		if (ret < -1 && errno != ECHILD) {
-			rk_error("waitpid(%i) error: %s\n",
-				test_pid, strerror(errno));
-		}
-
-		usleep(100);
-	}
-
-	if (waitpid(test_pid, &status, 0) < 0 && errno != ECHILD)
-		rk_error("waitpid(%i) error: %s\n", test_pid, strerror(errno));
-
-	if (!killed && WIFSIGNALED(status))
-		rk_error("Test child killed with signal %d", WTERMSIG(status));
-}
-
 void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		const char *fmt, ...)
 {
@@ -194,8 +143,6 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		default:
 			break;
 		}
-
-		exit(ttype);
 	}
 }
 
@@ -227,14 +174,11 @@ void rk_run_suite(rk_suite_t *suite)
 	if (suite->tests) {
 		for (size_t i = 0; suite->tests[i].run; i++) {
 			session->curr_test = suite->tests + i;
-			fork_run_test(session->curr_test);
+			run_test(session->curr_test);
 		}
 
 		session->curr_test = NULL;
 	}
-
-	if (waitpid(-1, NULL, 0) < 0 && errno != ECHILD)
-		rk_error("waitpid(-1) error: %s\n", strerror(errno));
 
 	if (session->skipped)
 		result = RK_SKIPPED;
