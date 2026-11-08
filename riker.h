@@ -145,26 +145,30 @@ do { \
 	size_t pos__; \
 	char *str__ = buf; \
 	size_t size__ = buf_size; \
-	pos__ = (size_t)snprintf(str__, size__, "(%s = ", (str_a)); \
-	size__ -= pos__; \
-	if (buf_size > size__) { \
-		str__ += pos__; \
+	if (size__ > 0) { \
+		pos__ = (size_t)snprintf(str__, size__, "(%s = ", (str_a)); \
+		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
+		else { size__ = 0; } \
+	} \
+	if (size__ > 0) { \
 		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_a)); \
-		size__ -= pos__; \
+		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
+		else { size__ = 0; } \
 	} \
-	if (buf_size > size__) { \
-		str__ += pos__; \
+	if (size__ > 0) { \
 		pos__ = (size_t)snprintf(str__, size__, ", %s = ", (str_b)); \
-		size__ -= pos__; \
+		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
+		else { size__ = 0; } \
 	} \
-	if (buf_size > size__) { \
-		str__ += pos__; \
+	if (size__ > 0) { \
 		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_b)); \
-		size__ -= pos__; \
+		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
+		else { size__ = 0; } \
 	} \
-	if (buf_size > size__) { \
-		str__ += pos__; \
+	if (size__ > 0) { \
 		pos__ = (size_t)snprintf(str__, size__, ")"); \
+		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
+		else { size__ = 0; } \
 	} \
 } while(0)
 #else
