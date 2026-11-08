@@ -345,6 +345,7 @@ int main(void)
 
 	assert(waitpid(pid, &status, 0) != -1);
 	assert(WIFEXITED(status));
+	assert(WEXITSTATUS(status) == RK_FAILED);
 
-	return 0;
+	return WEXITSTATUS(status) == RK_FAILED ? 0 : 1;
 }
