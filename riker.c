@@ -55,6 +55,16 @@ static bool use_color(void)
 	return isatty(STDOUT_FILENO) != 0;
 }
 
+static bool use_fork(void)
+{
+	const char *no_fork = getenv("RIKER_NO_FORK");
+
+	if (!no_fork || no_fork[0] == '\0' || strcmp(no_fork, "0") == 0)
+		return true;
+
+	return false;
+}
+
 static void show_test_result(const char *file, const int lineno, int res,
 			const char *fmt, va_list va)
 {
@@ -241,8 +251,14 @@ void rk_run_suite(rk_suite_t *suite)
 		suite->setup();
 
 	if (suite->tests) {
-		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++)
-			fork_run_test(&suite->tests[i]);
+		bool fork_tests = use_fork();
+
+		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++) {
+			if (fork_tests)
+				fork_run_test(&suite->tests[i]);
+			else
+				run_test(&suite->tests[i]);
+		}
 	}
 
 	if (suite->teardown)

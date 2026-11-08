@@ -18,6 +18,8 @@ typedef struct {
 	size_t len;
 	int run_called;
 	int teardown_calls;
+	pid_t suite_pid;
+	pid_t test_pid;
 } trace_buf_t;
 
 static trace_buf_t *trace;
@@ -339,6 +341,17 @@ static void fn_exit_nonzero(void)
 	_exit(7);
 }
 
+static void fn_record_suite_pid(void)
+{
+	trace->suite_pid = getpid();
+}
+
+static void fn_record_test_pid(void)
+{
+	trace->test_pid = getpid();
+	rk_result(TPASS, "pid recorded");
+}
+
 static void test_process_isolation_and_timeout(void)
 {
 	char out[4096];
@@ -382,6 +395,26 @@ static void test_process_isolation_and_timeout(void)
 	ASSERT_TRUE(rc == RK_FAILED);
 	ASSERT_TRUE(trace->run_called == 1);
 	ASSERT_TRUE(strstr(out, "Test timed out after 1 s") != NULL);
+
+	trace_reset();
+	rk_suite_t s_pids = {
+		.setup = fn_record_suite_pid,
+		.tests = (rk_test_t []) {
+			{ .run = fn_record_test_pid },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(unsetenv("RIKER_NO_FORK") == 0);
+	ASSERT_TRUE(run_suite_proc(&s_pids, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_PASSED);
+	ASSERT_TRUE(trace->suite_pid != trace->test_pid);
+
+	trace_reset();
+	ASSERT_TRUE(setenv("RIKER_NO_FORK", "1", 1) == 0);
+	ASSERT_TRUE(run_suite_proc(&s_pids, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(unsetenv("RIKER_NO_FORK") == 0);
+	ASSERT_TRUE(rc == RK_PASSED);
+	ASSERT_TRUE(trace->suite_pid == trace->test_pid);
 }
 
 int main(void)
