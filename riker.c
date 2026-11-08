@@ -190,10 +190,10 @@ void rk_run_suite(rk_suite_t *suite)
 		result = RK_SKIPPED;
 
 	printf("\nSummary:\n"
-		"%s:  %lu\n"
-		"%s:  %lu\n"
-		"%s: %lu\n"
-		"%s:  %lu\n",
+		"%s:  %zu\n"
+		"%s:  %zu\n"
+		"%s: %zu\n"
+		"%s:  %zu\n",
 		COLORIZE(GREEN, "Passed", 1),
 		session->passed,
 		COLORIZE(RED, "Failed", 1),
