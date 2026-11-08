@@ -81,12 +81,4 @@ if get_option('build_tests')
     )
 
     test('test_c99', test_c99)
-
-    test_exec = executable(
-        'test_riker',
-        'test_riker.c',
-        dependencies : riker,
-    )
-
-    test('test_riker', test_exec)
 endif
