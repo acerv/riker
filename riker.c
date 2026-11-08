@@ -172,10 +172,10 @@ void rk_run_suite(rk_suite_t *suite)
 		session->curr_test = NULL;
 	}
 
-	if (session->skipped)
-		result = RK_SKIPPED;
-	else if (session->failed || session->errors)
+	if (session->failed || session->errors)
 		result = RK_FAILED;
+	else if (session->skipped)
+		result = RK_SKIPPED;
 
 	if (suite->teardown) {
 		session->state = SUITE_TEARDOWN;
