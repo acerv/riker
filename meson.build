@@ -40,7 +40,7 @@ if get_option('build_tests')
     test_exec = executable(
         'test_riker',
         'test_riker.c',
-        link_with : my_library,
+        dependencies : riker,
     )
 
     test('test_riker', test_exec)
