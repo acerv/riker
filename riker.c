@@ -53,11 +53,11 @@ int RK_TST_RES;
 static rk_session_t *session;
 
 /* Forward declaration specifying gnu_printf attribute */
-void show_test_result(const char *file, const int lineno, int res,
+static void show_test_result(const char *file, const int lineno, int res,
 		const char *fmt, va_list va)
 		__attribute__ ((format (printf, 4, 0)));
 
-void show_test_result(const char *file, const int lineno, int res,
+static void show_test_result(const char *file, const int lineno, int res,
 			const char *fmt, va_list va)
 {
 	char buf[1024];
