@@ -132,44 +132,36 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		long double: "%Lg", \
 		default: "%p")
 
+static inline int rk_snprintf_float_(char *buf, size_t size, const char *fmt,
+				     float val)
+{
+	(void)fmt;
+	return snprintf(buf, size, "%g", (double)val);
+}
+
 #define RK_SNPRINTF_NUM_(ret, buf, buf_size, num) \
 do { \
 	if (buf_size > 0) { \
-		ret = (size_t) snprintf(buf, buf_size, \
-			  RK_PRINT_FMT_((num)), (num)); \
+		int sn_ret__ = _Generic((num), \
+			float: rk_snprintf_float_, \
+			default: snprintf)(buf, buf_size, \
+					   RK_PRINT_FMT_((num)), (num)); \
+		(ret) = sn_ret__ > 0 ? (size_t)sn_ret__ : (size_t)0; \
 	} \
 } while(0)
 
 #define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, str_a, val_a, str_b, val_b) \
 do { \
-	size_t pos__; \
-	char *str__ = buf; \
-	size_t size__ = buf_size; \
-	if (size__ > 0) { \
-		pos__ = (size_t)snprintf(str__, size__, "(%s = ", (str_a)); \
-		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
-		else { size__ = 0; } \
-	} \
-	if (size__ > 0) { \
-		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_a)); \
-		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
-		else { size__ = 0; } \
-	} \
-	if (size__ > 0) { \
-		pos__ = (size_t)snprintf(str__, size__, ", %s = ", (str_b)); \
-		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
-		else { size__ = 0; } \
-	} \
-	if (size__ > 0) { \
-		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_b)); \
-		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
-		else { size__ = 0; } \
-	} \
-	if (size__ > 0) { \
-		pos__ = (size_t)snprintf(str__, size__, ")"); \
-		if (pos__ < size__) { str__ += pos__; size__ -= pos__; } \
-		else { size__ = 0; } \
-	} \
+	char a_buf__[2048] = {0}; \
+	char b_buf__[2048] = {0}; \
+	size_t len_a__ = 0; \
+	size_t len_b__ = 0; \
+	RK_SNPRINTF_NUM_(len_a__, a_buf__, sizeof(a_buf__), (val_a)); \
+	RK_SNPRINTF_NUM_(len_b__, b_buf__, sizeof(b_buf__), (val_b)); \
+	(void)len_a__; \
+	(void)len_b__; \
+	snprintf(buf, buf_size, "(%s = %s, %s = %s)", \
+		 (str_a), a_buf__, (str_b), b_buf__); \
 } while(0)
 #else
 #define RK_SNPRINTF_NUM_(ret, buf, buf_size, num) (ret = 0)
