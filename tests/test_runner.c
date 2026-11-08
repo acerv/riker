@@ -317,6 +317,7 @@ static void test_null_session_safety(void)
 		rk_result(TFAIL, "standalone fail");
 		rk_result(TSKIP, "standalone skip");
 		rk_error("standalone error");
+		rk_brk(TFAIL, "standalone brk");
 		rk_check_eq(1, 1);
 		_exit(0);
 	}
@@ -417,6 +418,83 @@ static void test_process_isolation_and_timeout(void)
 	ASSERT_TRUE(trace->suite_pid == trace->test_pid);
 }
 
+static void fn_brk_in_setup(void)
+{
+	trace_append("BS+");
+	rk_brk(TSKIP, "unsupported feature");
+	trace_append("BAD");
+}
+
+static void fn_brk_in_run(void)
+{
+	trace_append("BR*");
+	rk_brk(TFAIL, "fatal check");
+	trace_append("BAD");
+}
+
+static void fn_require_test(void)
+{
+	rk_require(1 == 1);
+	trace_append("OK");
+	rk_require(1 == 2);
+	trace_append("BAD");
+}
+
+static void test_rk_brk_and_require(void)
+{
+	char out[4096];
+	int rc;
+
+	trace_reset();
+	rk_suite_t s_setup_skip = {
+		.tests = (rk_test_t []) {
+			{
+				.setup = fn_brk_in_setup,
+				.run = hook_guarded_run,
+				.teardown = hook_counted_teardown,
+			},
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_setup_skip, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_SKIPPED);
+	ASSERT_TRUE(trace->run_called == 0);
+	ASSERT_TRUE(trace->teardown_calls == 1);
+	ASSERT_TRUE(strcmp(trace->log, "BS+T-") == 0);
+
+	trace_reset();
+	rk_suite_t s_run_brk = {
+		.tests = (rk_test_t []) {
+			{
+				.run = fn_brk_in_run,
+				.teardown = hook_counted_teardown,
+			},
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_run_brk, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->teardown_calls == 1);
+	ASSERT_TRUE(strcmp(trace->log, "BR*T-") == 0);
+
+	trace_reset();
+	rk_suite_t s_req = {
+		.tests = (rk_test_t []) {
+			{
+				.run = fn_require_test,
+				.teardown = hook_counted_teardown,
+			},
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(setenv("RIKER_NO_FORK", "1", 1) == 0);
+	ASSERT_TRUE(run_suite_proc(&s_req, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(unsetenv("RIKER_NO_FORK") == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->teardown_calls == 1);
+	ASSERT_TRUE(strcmp(trace->log, "OKT-") == 0);
+}
+
 int main(void)
 {
 	void *mem = mmap(NULL, sizeof(*trace), PROT_READ | PROT_WRITE,
@@ -430,6 +508,7 @@ int main(void)
 	test_structural_edge_cases();
 	test_null_session_safety();
 	test_process_isolation_and_timeout();
+	test_rk_brk_and_require();
 
 	ASSERT_TRUE(munmap(trace, sizeof(*trace)) == 0);
 	return 0;

@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -39,6 +40,8 @@ typedef struct
 
 int RK_TST_RES;
 static rk_session_t *session;
+static bool test_jmp_active;
+static jmp_buf test_jmp_env;
 
 /* Forward declaration specifying gnu_printf attribute */
 static void show_test_result(const char *file, const int lineno, int res,
@@ -117,20 +120,30 @@ static inline bool is_test_empty(const rk_test_t *test)
 	return !test->run && !test->setup && !test->teardown;
 }
 
+static void run_hook(rk_test_func fn)
+{
+	test_jmp_active = true;
+	if (setjmp(test_jmp_env) == 0)
+		fn();
+	test_jmp_active = false;
+}
+
 static void run_test(rk_test_t *test)
 {
 	assert(test);
 
 	size_t prev_err = session->errors;
 	size_t prev_fail = session->failed;
+	size_t prev_skip = session->skipped;
 
 	if (test->setup)
-		test->setup();
+		run_hook(test->setup);
 
 	if (session->errors == prev_err &&
 	    session->failed == prev_fail &&
+	    session->skipped == prev_skip &&
 	    test->run)
-		test->run();
+		run_hook(test->run);
 
 	if (test->teardown)
 		test->teardown();
@@ -223,6 +236,19 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 	va_start(va, fmt);
 	show_test_result(file, lineno, ttype, fmt, va);
 	va_end(va);
+}
+
+void rk_brk_(const char *file, const int lineno, rk_test_result_t ttype,
+		const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	show_test_result(file, lineno, ttype, fmt, va);
+	va_end(va);
+
+	if (test_jmp_active)
+		longjmp(test_jmp_env, 1);
 }
 
 void rk_run_suite(rk_suite_t *suite)

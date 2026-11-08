@@ -126,6 +126,19 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		const char *fmt, ...)
 		__attribute__ ((format (printf, 4, 5)));
 
+/**
+ * @brief Internal helper backing @ref rk_brk and @ref rk_require.
+ *
+ * @param file Source file path where the break was reported.
+ * @param lineno Source line number where the break was reported.
+ * @param ttype Result classification.
+ * @param fmt printf-style format string.
+ * @param ... Arguments for `fmt`.
+ */
+void rk_brk_(const char *file, const int lineno, rk_test_result_t ttype,
+		const char *fmt, ...)
+		__attribute__ ((format (printf, 4, 5)));
+
 /** @cond INTERNAL */
 
 #if __STDC_VERSION__ >= 201112L
@@ -240,6 +253,22 @@ do { \
 } while (0)
 
 /**
+ * @brief Report a result and abort the active test hook.
+ *
+ * Behaves like @ref rk_result, then aborts the current `setup` or `run`
+ * hook when executed inside a test. Teardown still executes normally.
+ *
+ * @param ttype Message type.
+ * @param arg_fmt printf-style format string.
+ * @param ... Arguments for `arg_fmt`.
+ */
+#define rk_brk(ttype, arg_fmt, ...) do { \
+	if (ttype != TINFO) \
+		RK_TST_RES = ttype; \
+	rk_brk_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__); \
+} while (0)
+
+/**
  * @brief Verify that `expr` is satisfied.
  *
  * Verify that `expr` evaluates to non-zero and report TPASS, or TFAIL otherwise.
@@ -248,6 +277,21 @@ do { \
  */
 #define rk_check_expr(expr) \
 	rk_result(((expr) ? TPASS : TFAIL), "%s", #expr)
+
+/**
+ * @brief Require `expr` to be satisfied or abort the current test.
+ *
+ * Reports `TPASS` if `expr` evaluates to non-zero; otherwise reports `TFAIL`
+ * and aborts the active test hook via @ref rk_brk.
+ *
+ * @param expr Condition that must hold to continue the test.
+ */
+#define rk_require(expr) do { \
+	if (expr) \
+		rk_result(TPASS, "%s", #expr); \
+	else \
+		rk_brk(TFAIL, "%s", #expr); \
+} while (0)
 
 /**
  * @brief Verify that two numbers are equal.
