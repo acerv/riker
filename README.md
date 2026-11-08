@@ -19,6 +19,18 @@ To build and run the test suite:
 make check
 ```
 
+Run tests with AddressSanitizer and UndefinedBehaviorSanitizer:
+
+```sh
+make check-asan
+```
+
+Run static analysis with Clang Static Analyzer:
+
+```sh
+make check-analyze
+```
+
 To generate the API documentation (requires Doxygen):
 
 ```sh

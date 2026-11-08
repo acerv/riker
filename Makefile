@@ -8,13 +8,23 @@ CC          ?= cc
 AR          ?= ar
 DOXYGEN     ?= doxygen
 CFLAGS      ?= -O2 -g -Wall -Wextra
+SANITIZE    ?= 0
 
 PREFIX      ?= /usr/local
 LIBDIR      ?= $(PREFIX)/lib
 INCLUDEDIR  ?= $(PREFIX)/include
 PKGCONFIGDIR ?= $(LIBDIR)/pkgconfig
 
-RK_CFLAGS    = -std=gnu11 -I. $(CFLAGS)
+HARDENING_CFLAGS ?= -fstack-protector-strong -D_FORTIFY_SOURCE=3
+
+ifeq ($(SANITIZE),1)
+SAN_FLAGS    = -fsanitize=address,undefined
+else
+SAN_FLAGS    =
+endif
+
+RK_CFLAGS    = -std=gnu11 -I. $(HARDENING_CFLAGS) $(SAN_FLAGS) $(CFLAGS)
+RK_LDFLAGS   = $(SAN_FLAGS) $(LDFLAGS)
 
 STATIC_LIB   = libriker.a
 SHARED_LIB   = libriker.so.$(VERSION)
@@ -25,7 +35,7 @@ TESTS        = tests/test_runner tests/test_macros \
 	       tests/test_default_main tests/test_c99
 TEST_CFLAGS  = -Itests
 
-.PHONY: all install uninstall clean check doc
+.PHONY: all install uninstall clean check check-asan check-analyze doc
 
 all: $(STATIC_LIB) $(SHARED_LIB) $(SONAME) $(DEV_LINK) riker.pc
 
@@ -39,7 +49,7 @@ $(STATIC_LIB): riker.o
 	$(AR) rcs $@ $^
 
 $(SHARED_LIB): riker.pic.o
-	$(CC) $(RK_CFLAGS) $(LDFLAGS) -shared \
+	$(CC) $(RK_CFLAGS) $(RK_LDFLAGS) -shared \
 		-Wl,-soname,$(SONAME) -o $@ $^
 
 $(SONAME) $(DEV_LINK): $(SHARED_LIB)
@@ -74,20 +84,20 @@ tests/test_helper.o: tests/test_helper.c tests/test_helper.h riker.h
 	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) -c -o $@ $<
 
 tests/test_runner: tests/test_runner.c tests/test_helper.o $(STATIC_LIB)
-	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(RK_LDFLAGS) -o $@ $^
 
 tests/test_macros: tests/test_macros.c tests/test_helper.o $(STATIC_LIB)
-	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(RK_LDFLAGS) -o $@ $^
 
 tests/test_default_main: tests/test_default_main.c \
 		tests/test_default_main_aux.c tests/test_default_main.h \
 		$(STATIC_LIB)
-	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(LDFLAGS) -o $@ \
+	$(CC) $(CPPFLAGS) $(RK_CFLAGS) $(TEST_CFLAGS) $(RK_LDFLAGS) -o $@ \
 		$(filter %.c %.a,$^)
 
 tests/test_c99: tests/test_c99.c tests/test_helper.o $(STATIC_LIB)
 	$(CC) $(CPPFLAGS) $(RK_CFLAGS) -std=gnu99 $(TEST_CFLAGS) \
-		$(LDFLAGS) -o $@ $^
+		$(RK_LDFLAGS) -o $@ $^
 
 check: $(TESTS)
 	@for t in $(TESTS); do \
@@ -95,6 +105,12 @@ check: $(TESTS)
 		./$$t || { echo "FAIL: $$t"; exit 1; }; \
 	done
 	@echo "All tests passed"
+
+check-asan:
+	$(MAKE) clean && $(MAKE) check SANITIZE=1
+
+check-analyze:
+	scan-build --status-bugs $(MAKE) clean check
 
 Doxyfile: Doxyfile.in Makefile
 	sed -e 's|@PROJECT_NAME@|riker|g' \
