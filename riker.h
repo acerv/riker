@@ -314,7 +314,7 @@ do { \
 	if (!_ck_ptr) \
 		rk_result(TPASS, "%s == NULL", #ptr); \
 	else \
-		rk_result(TFAIL, "%s == NULL (0x%p)", #ptr, _ck_ptr); \
+		rk_result(TFAIL, "%s == NULL (%p)", #ptr, _ck_ptr); \
 } while(0)
 
 /**
@@ -328,7 +328,7 @@ do { \
 do { \
 	const void *_ck_ptr = (ptr); \
 	if (_ck_ptr) \
-		rk_result(TPASS, "%s != NULL (0x%p)", #ptr, _ck_ptr); \
+		rk_result(TPASS, "%s != NULL (%p)", #ptr, _ck_ptr); \
 	else \
 		rk_result(TFAIL, "%s != NULL", #ptr); \
 } while(0)
@@ -433,11 +433,11 @@ do { \
 	const void *_rk_ptr1 = (ptr1); \
 	const void *_rk_ptr2 = (ptr2); \
 	if (_rk_ptr1 == _rk_ptr2) { \
-		rk_result(TPASS, "%s (0x%p) == %s (0x%p)", \
+		rk_result(TPASS, "%s (%p) == %s (%p)", \
 			#ptr1, _rk_ptr1, \
 			#ptr2, _rk_ptr2); \
 	} else { \
-		rk_result(TFAIL, "%s (0x%p) != %s (0x%p)", \
+		rk_result(TFAIL, "%s (%p) != %s (%p)", \
 			#ptr1, _rk_ptr1, \
 			#ptr2, _rk_ptr2); \
 	} \
@@ -457,11 +457,11 @@ do { \
 	const void *_rk_ptr1 = (ptr1); \
 	const void *_rk_ptr2 = (ptr2); \
 	if (_rk_ptr1 != _rk_ptr2) { \
-		rk_result(TPASS, "%s (0x%p) != %s (0x%p)", \
+		rk_result(TPASS, "%s (%p) != %s (%p)", \
 			#ptr1, _rk_ptr1, \
 			#ptr2, _rk_ptr2); \
 	} else { \
-		rk_result(TFAIL, "%s (0x%p) == %s (0x%p)", \
+		rk_result(TFAIL, "%s (%p) == %s (%p)", \
 			#ptr1, _rk_ptr1, \
 			#ptr2, _rk_ptr2); \
 	} \
