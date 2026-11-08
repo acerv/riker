@@ -3,6 +3,11 @@
  * Copyright (c) 2025 Andrea Cervesato <andrea.cervesato@mailbox.org>
  */
 
+/**
+ * @file riker.h
+ * @brief Public API for the Riker C testing framework.
+ */
+
 #ifndef RIKER_H
 #define RIKER_H
 
@@ -12,14 +17,14 @@
 #include <assert.h>
 #include <stddef.h>
 
-/** @brief Latest test result. This is set all the times we call `rk_result`. */
+/** @brief Latest test result, updated by @ref rk_result (except `TINFO`) and @ref rk_error. */
 extern int RK_TST_RES;
 
 /**
  * @brief Test result type.
  *
- * Input parameter for the @ref rk_result function, defining the result
- * of the test.
+ * Input parameter for the @ref rk_result macro, defining the result
+ * of a check or message.
  */
 typedef enum
 {
@@ -38,21 +43,21 @@ typedef enum
 /**
  * @brief Testing suite runner result.
  *
- * Return values provided by the runner and forwarded to the @ref main function
- * when a new test is executed.
+ * Exit codes passed to `exit()` by @ref rk_run_suite after running a suite.
  */
 typedef enum 
 {
-	/** @brief An error occured during runner execution. */
+	/** @brief An error occurred during runner execution. */
 	RK_ERROR = -1,
 	/** @brief All tests passed. */
 	RK_PASSED = 0,
-	/** @brief Some tests failed. */
+	/** @brief One or more tests failed or reported errors. */
 	RK_FAILED,
-	/** @brief No tests have failed but some have been skipped. */
+	/** @brief No tests failed or errored, and at least one was skipped. */
 	RK_SKIPPED,
 } rk_suite_result_t;
 
+/** @brief Callback type for suite and test setup, run, and teardown hooks. */
 typedef void (*rk_test_func)(void);
 
 /**
@@ -85,29 +90,40 @@ typedef struct
  *			.teardown = teardown1
  *		},
  *		{ .run = test2 },
- *		{ NULL },
+ *		{ .run = NULL },
  *	},
  *	.setup = setup_suite,
  *	.teardown = teardown_suite,
  * };
  * @endcode
  *
- * The object is going to be used automatically by the @ref main function at
- * compile time. Make sure that its name is correct.
+ * The object is used automatically by the default @ref main function when
+ * `TEST_CUSTOM_MAIN` is not defined. Make sure that its name is `test_suite`.
  */
 typedef struct
 {
 	/** @brief Setup function executed before all `tests`. */
 	rk_test_func setup;
-	/** @brief Setup function executed after all `tests`. */
+	/** @brief Teardown function executed after all `tests`. */
 	rk_test_func teardown;
-	/** @brief List of the tests to execute. */
+	/** @brief List of tests to execute, terminated by an all-NULL entry. */
 	rk_test_t *tests;
 } rk_suite_t;
 
+/**
+ * @brief Internal helper backing @ref rk_result and @ref rk_error.
+ *
+ * @param file Source file path where the result was reported.
+ * @param lineno Source line number where the result was reported.
+ * @param ttype Result classification.
+ * @param fmt printf-style format string.
+ * @param ... Arguments for `fmt`.
+ */
 void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		const char *fmt, ...)
 		__attribute__ ((format (printf, 4, 5)));
+
+/** @cond INTERNAL */
 
 #if __STDC_VERSION__ >= 201112L
 
@@ -187,15 +203,17 @@ do { \
 	} \
 } while(0)
 
+/** @endcond */
+
 /**
  * @brief Send a test result to stdout.
  *
- * Send a test result to stdout and save the test status in the suite results
- * table.
+ * Print a formatted test result to stdout, update session counters, and store
+ * `ttype` in @ref RK_TST_RES when `ttype` is not `TINFO`.
  *
  * @param ttype Message type.
- * @param arg_fmt String to print, including string formatters.
- * @param va_args Arguments for the printf().
+ * @param arg_fmt printf-style format string.
+ * @param ... Arguments for `arg_fmt`.
  */
 #define rk_result(ttype, arg_fmt, ...) do { \
 	if (ttype != TINFO) \
@@ -204,13 +222,14 @@ do { \
 } while (0)
 
 /**
- * @brief Send an error message to stderr and close the current session.
+ * @brief Report a test error to stdout.
  *
- * Send an error message to the stderr, save the session status in the suite
- * results table and exit() the calling process.
+ * Print an error message to stdout, increment the session error counter, and
+ * set @ref RK_TST_RES to `TERROR`. If called from a test setup hook, the
+ * test `run` hook is skipped while `teardown` still executes.
  *
- * @param arg_fmt String to print, including string formatters.
- * @param va_args Arguments for the printf().
+ * @param arg_fmt printf-style format string.
+ * @param ... Arguments for `arg_fmt`.
  */
 #define rk_error(arg_fmt, ...) do { \
 	RK_TST_RES = TERROR; \
@@ -220,7 +239,7 @@ do { \
 /**
  * @brief Verify that `expr` is satisfied.
  *
- * Verify that `expr` is satisfied and return a TPASS message. TFAIL otherwise.
+ * Verify that `expr` evaluates to non-zero and report TPASS, or TFAIL otherwise.
  *
  * @param expr An expression that has to be satisfied.
  */
@@ -230,66 +249,66 @@ do { \
 /**
  * @brief Verify that two numbers are equal.
  *
- * Recognize the numeric type of the input values and verify if they have the
- * same value.
+ * Evaluate `a` and `b` once and verify that they are equal. Under C11 or newer,
+ * failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_eq(a, b) RK_CHECK_NUM_(a, b, ==)
 
 /**
  * @brief Verify that two numbers are different.
  *
- * Recognize the numeric type of the input values and verify if they don' have
- * the same value.
+ * Evaluate `a` and `b` once and verify that they do not have the same value.
+ * Under C11 or newer, failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_ne(a, b) RK_CHECK_NUM_(a, b, !=)
 
 /**
  * @brief Verify that the first number is greater than the second.
  *
- * Recognize the numeric type of the input values and verify that first
- * number is greater than the second.
+ * Evaluate `a` and `b` once and verify that `a` is greater than `b`. Under C11
+ * or newer, failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_gt(a, b) RK_CHECK_NUM_(a, b, >)
 
 /**
- * @brief Verify that the first number is greater or equal than the second.
+ * @brief Verify that the first number is greater than or equal to the second.
  *
- * Recognize the numeric type of the input values and verify that first
- * number is greater or equal than the second.
+ * Evaluate `a` and `b` once and verify that `a` is greater than or equal to `b`.
+ * Under C11 or newer, failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_ge(a, b) RK_CHECK_NUM_(a, b, >=)
 
 /**
- * @brief Verify that the first number is lower than the second.
+ * @brief Verify that the first number is less than the second.
  *
- * Recognize the numeric type of the input values and verify that first
- * number is lower than the second.
+ * Evaluate `a` and `b` once and verify that `a` is less than `b`. Under C11 or
+ * newer, failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_lt(a, b) RK_CHECK_NUM_(a, b, <)
 
 /**
- * @brief Verify that the first number is lower or equal than the second.
+ * @brief Verify that the first number is less than or equal to the second.
  *
- * Recognize the numeric type of the input values and verify that first
- * number is lower or equal than the second.
+ * Evaluate `a` and `b` once and verify that `a` is less than or equal to `b`.
+ * Under C11 or newer, failed checks include formatted operand values.
  *
- * @param a First number.
- * @param b Second number.
+ * @param a First value.
+ * @param b Second value.
  */
 #define rk_check_le(a, b) RK_CHECK_NUM_(a, b, <=)
 
@@ -326,13 +345,13 @@ do { \
 } while(0)
 
 /**
- * @brief Verify that two memories contain the same data. 
+ * @brief Verify that two memory regions contain the same data.
  *
- * Verify that `m1` and `m2` contains the same data.
+ * Verify that `m1` and `m2` contain the same `n` bytes.
  *
- * @param m1 First pointer to some memory data.
- * @param m2 Second pointer to some memory data.
- * @param n Length of data.
+ * @param m1 First pointer to memory data.
+ * @param m2 Second pointer to memory data.
+ * @param n Length of data in bytes.
  */
 #define rk_check_mem_eq(m1, m2, n) \
 do { \
@@ -346,13 +365,13 @@ do { \
 } while(0)
 
 /**
- * @brief Verify that two memories doesn't contain the same data. 
+ * @brief Verify that two memory regions do not contain the same data.
  *
- * Verify that `m1` and `m2` doesn't contains the same data.
+ * Verify that `m1` and `m2` differ within `n` bytes.
  *
- * @param m1 First pointer to some memory data.
- * @param m2 Second pointer to some memory data.
- * @param n Length of data.
+ * @param m1 First pointer to memory data.
+ * @param m2 Second pointer to memory data.
+ * @param n Length of data in bytes.
  */
 #define rk_check_mem_ne(m1, m2, n) \
 do { \
@@ -366,13 +385,13 @@ do { \
 } while(0)
 
 /**
- * @brief Verify that two strings contain the same data. 
+ * @brief Verify that two strings contain the same data.
  *
- * Verify that `s1` and `s2` contains the same data.
+ * Verify that `s1` and `s2` contain the same `n` bytes.
  *
- * @param s1 First pointer to some string data.
- * @param s2 Second pointer to some string data.
- * @param n Length of data.
+ * @param s1 First pointer to string data.
+ * @param s2 Second pointer to string data.
+ * @param n Length of data in bytes.
  */
 #define rk_check_str_eq(s1, s2, n) \
 do { \
@@ -389,13 +408,13 @@ do { \
 } while(0)
 
 /**
- * @brief Verify that two strings don't contain the same data. 
+ * @brief Verify that two strings do not contain the same data.
  *
- * Verify that `s1` and `s2` don't contains the same data.
+ * Verify that `s1` and `s2` differ within `n` bytes.
  *
- * @param s1 First pointer to some string data.
- * @param s2 Second pointer to some string data.
- * @param n Length of data.
+ * @param s1 First pointer to string data.
+ * @param s2 Second pointer to string data.
+ * @param n Length of data in bytes.
  */
 #define rk_check_str_ne(s1, s2, n) \
 do { \
@@ -460,16 +479,19 @@ do { \
 } while(0)
 
 /**
- * @brief Testing suite declaration.
+ * @brief Default testing suite declaration.
  *
- * Override this object in order to declare your own testing suite.
+ * Define this symbol in your test program when using the default @ref main
+ * provided when `TEST_CUSTOM_MAIN` is not defined.
  */
 extern rk_suite_t test_suite;
 
 /**
  * @brief Run a testing suite.
  *
- * Run all tests inside a testing suite and exit with the ending result.
+ * Run suite setup, all tests, and suite teardown, print a summary, and exit
+ * with a @ref rk_suite_result_t status (`RK_FAILED` takes precedence over
+ * `RK_SKIPPED`).
  *
  * @param suite Testing suite object.
  */
@@ -477,6 +499,13 @@ void rk_run_suite(rk_suite_t *suite) __attribute__ ((noreturn));
 
 #ifndef TEST_CUSTOM_MAIN
 
+/**
+ * @brief Default test runner entry point.
+ *
+ * Provided automatically unless `TEST_CUSTOM_MAIN` is defined before including
+ * this header. Programs spanning multiple translation units must define
+ * `TEST_CUSTOM_MAIN` in auxiliary files to avoid duplicate `main` symbols.
+ */
 int main(void)
 {
 	rk_run_suite(&test_suite);
