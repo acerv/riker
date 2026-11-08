@@ -222,8 +222,8 @@ do { \
 
 #define RK_CHECK_NUM_(a, b, op) \
 do { \
-	__auto_type _rk_a = (a); \
-	__auto_type _rk_b = (b); \
+	__extension__ __auto_type _rk_a = (a); \
+	__extension__ __auto_type _rk_b = (b); \
 	int ttype__ = (((_rk_a) op (_rk_b)) ? TPASS : TFAIL); \
 	if (ttype__ == TFAIL) { \
 		char buf__[4096] = {0}; \
@@ -428,8 +428,8 @@ do { \
  */
 #define rk_check_near(a, b, eps) \
 do { \
-	__auto_type _rk_a = (a); \
-	__auto_type _rk_b = (b); \
+	__extension__ __auto_type _rk_a = (a); \
+	__extension__ __auto_type _rk_b = (b); \
 	long double _rk_e = (long double)(eps); \
 	long double _rk_diff = (long double)_rk_a - (long double)_rk_b; \
 	if (_rk_diff < 0.0L) \
