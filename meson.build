@@ -57,6 +57,14 @@ if get_option('build_tests')
 
     test('test_runner', test_runner)
 
+    test_macros = executable(
+        'test_macros',
+        'tests/test_macros.c',
+        dependencies : test_helper,
+    )
+
+    test('test_macros', test_macros)
+
     test_exec = executable(
         'test_riker',
         'test_riker.c',
