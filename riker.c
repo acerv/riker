@@ -101,6 +101,11 @@ void show_test_result(const char *file, const int lineno, int res,
 	printf("%s\n", buf);
 }
 
+static inline bool is_test_empty(const rk_test_t *test)
+{
+	return !test->run && !test->setup && !test->teardown;
+}
+
 static void run_test(rk_test_t *test)
 {
 	assert(test);
@@ -165,8 +170,8 @@ void rk_run_suite(rk_suite_t *suite)
 	}
 
 	if (suite->tests) {
-		for (size_t i = 0; suite->tests[i].run; i++) {
-			session->curr_test = suite->tests + i;
+		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++) {
+			session->curr_test = &suite->tests[i];
 			run_test(session->curr_test);
 		}
 
