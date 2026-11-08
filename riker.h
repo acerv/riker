@@ -56,7 +56,7 @@ typedef enum
 typedef void (*rk_test_func)(void);
 
 /**
- * @brief Rapresent a test.
+ * @brief Represent a test.
  *
  * This struct has to be initialized in order to declare a test.
  */
@@ -71,16 +71,16 @@ typedef struct
 } rk_test_t;
 
 /**
- * @brief Rapresent a testing suite.
+ * @brief Represent a testing suite.
  *
  * This struct has to be initialized in order to declare a testing suite.
  * Declaration of a testing suite can be done in the following way:
  *
  * @code
- * static struct rk_suite test_suite = {
- *	.tests = (struct rk_test []) {
+ * rk_suite_t test_suite = {
+ *	.tests = (rk_test_t []) {
  *		{
- *			.run = test2,
+ *			.run = test1,
  *			.setup = setup1,
  *			.teardown = teardown1
  *		},
