@@ -242,6 +242,20 @@ static void fn_type_matrix(void)
 	rk_check_gt(f1, f2);
 	rk_check_gt(d1, d2);
 	rk_check_gt(ld1, ld2);
+
+	volatile double z = 0.0;
+	double nan_v = z / z;
+
+	rk_check_near(1.005f, 1.0f, 0.01f);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_near(1.05, 1.0, 0.01);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_near(1.0001L, 1.0L, 0.001L);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_near(1.0, 1.0, -0.1);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_near(nan_v, 1.0, 1.0);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
 	rk_check_eq(ms1, ms2);
 	rk_check_eq(cs1, cs2);
 	rk_check_eq(p1, p2);

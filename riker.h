@@ -360,6 +360,36 @@ do { \
 #define rk_check_le(a, b) RK_CHECK_NUM_(a, b, <=)
 
 /**
+ * @brief Verify that two values are within an absolute tolerance.
+ *
+ * Evaluate `a`, `b`, and `eps` once and verify that `|a - b| <= eps` with
+ * `eps >= 0`. NaN inputs fail the check.
+ *
+ * @param a First value.
+ * @param b Second value.
+ * @param eps Maximum allowed absolute difference.
+ */
+#define rk_check_near(a, b, eps) \
+do { \
+	__auto_type _rk_a = (a); \
+	__auto_type _rk_b = (b); \
+	long double _rk_e = (long double)(eps); \
+	long double _rk_diff = (long double)_rk_a - (long double)_rk_b; \
+	if (_rk_diff < 0.0L) \
+		_rk_diff = -_rk_diff; \
+	if (_rk_e >= 0.0L && _rk_diff <= _rk_e) { \
+		rk_result(TPASS, "|%s - %s| <= %s", #a, #b, #eps); \
+	} else { \
+		char buf__[4096] = {0}; \
+		size_t buf_size__ = 4096; \
+		RK_SNPRINTF_NUM_ARGS_DEBUG_(buf__, buf_size__, \
+			#a, _rk_a, #b, _rk_b); \
+		rk_result(TFAIL, "|%s - %s| <= %s %s (eps = %Lg)", \
+			#a, #b, #eps, buf__, _rk_e); \
+	} \
+} while(0)
+
+/**
  * @brief Verify that pointer is NULL.
  *
  * Recognize if `ptr` is NULL and return a TPASS message. TFAIL otherwise.
