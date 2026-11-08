@@ -73,6 +73,15 @@ if get_option('build_tests')
 
     test('test_default_main', test_default_main)
 
+    test_c99 = executable(
+        'test_c99',
+        'tests/test_c99.c',
+        dependencies : test_helper,
+        override_options : ['c_std=gnu99'],
+    )
+
+    test('test_c99', test_c99)
+
     test_exec = executable(
         'test_riker',
         'test_riker.c',
