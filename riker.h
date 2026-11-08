@@ -113,7 +113,9 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 
 #define RK_PRINT_FMT_(...) \
 	_Generic((__VA_ARGS__), \
+		_Bool: "%d", \
 		char*: "%s", \
+		const char*: "%s", \
 		char: "%c", \
 		signed char: "%hhi", \
 		short: "%hi", \
@@ -121,7 +123,7 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		long: "%li", \
 		long long: "%lli", \
 		unsigned char: "%hhu", \
-		unsigned short: "%hi", \
+		unsigned short: "%hu", \
 		unsigned int: "%u", \
 		unsigned long: "%lu", \
 		unsigned long long: "%llu", \

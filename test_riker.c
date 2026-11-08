@@ -254,6 +254,34 @@ static void test_rk_check_assignment(void)
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
+static void test_rk_check_types(void)
+{
+	_Bool b1 = 1, b2 = 0;
+	unsigned short us1 = 65535, us2 = 1;
+	const char *s1 = "abc", *s2 = "def";
+	double d1 = 1.5, d2 = 2.5;
+
+	rk_check_eq(b1, b1);
+	rk_check_eq(RK_TST_RES, TPASS);
+	rk_check_eq(b1, b2);
+	rk_check_eq(RK_TST_RES, TFAIL);
+
+	rk_check_eq(us1, us1);
+	rk_check_eq(RK_TST_RES, TPASS);
+	rk_check_eq(us1, us2);
+	rk_check_eq(RK_TST_RES, TFAIL);
+
+	rk_check_ne(s1, s2);
+	rk_check_eq(RK_TST_RES, TPASS);
+	rk_check_eq(s1, s2);
+	rk_check_eq(RK_TST_RES, TFAIL);
+
+	rk_check_lt(d1, d2);
+	rk_check_eq(RK_TST_RES, TPASS);
+	rk_check_gt(d1, d2);
+	rk_check_eq(RK_TST_RES, TFAIL);
+}
+
 static rk_suite_t test_suite = {
 	.tests = (rk_test_t []) {
 		{
@@ -295,6 +323,7 @@ static rk_suite_t test_suite = {
 		{ .run = test_rk_check_eq_ptr },
 		{ .run = test_rk_check_ptr_ne },
 		{ .run = test_rk_check_assignment },
+		{ .run = test_rk_check_types },
 		{ .run = NULL },
 	},
 	.setup = setup_suite,
