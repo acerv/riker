@@ -6,6 +6,7 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "test_helper.h"
+#include <errno.h>
 #include <string.h>
 
 static int eval_count;
@@ -39,10 +40,46 @@ static void fn_c99_checks(void)
 	rk_check_str_eq(s1, s2, 3);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 
+	rk_check_cstr_eq(s1, "abc");
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_cstr_ne(s1, s2);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_cstr_eq(NULL, s1);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
+	rk_check_mem_eq(NULL, s1, 3);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_mem_ne(s1, NULL, 3);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
+	rk_check_near(1.005, 1.0, 0.01);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_near(1.05, 1.0, 0.01);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
+	errno = ENOENT;
+	rk_check_errno(ENOENT);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_result_errno(TFAIL, "c99 open");
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
 	eval_count = 0;
 	rk_check_eq(next_val(), 20);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 	ASSERT_TRUE(eval_count == 1);
+
+	eval_count = 0;
+	rk_check_near(next_val(), 20.0, 1.0);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	ASSERT_TRUE(eval_count == 1);
+}
+
+static void fn_c99_brk(void)
+{
+	rk_require(1 == 1);
+	rk_result(TINFO, "after require pass");
+	rk_require(1 == 2);
+	rk_result(TPASS, "unreachable after require fail");
 }
 
 static void fn_c99_pass(void)
@@ -70,6 +107,7 @@ int main(void)
 	rk_suite_t s_checks = {
 		.tests = (rk_test_t []) {
 			{ .run = fn_c99_checks },
+			{ .run = fn_c99_brk },
 			{ .run = NULL },
 		},
 	};
@@ -79,6 +117,11 @@ int main(void)
 	ASSERT_TRUE(strstr(out, "PASS a == b") != NULL);
 	ASSERT_TRUE(strstr(out, "FAIL a == c") != NULL);
 	ASSERT_TRUE(strstr(out, "FAIL s1 != s2 (s1 = abc, s2 = abd)") != NULL);
+	ASSERT_TRUE(strstr(out, "FAIL |1.05 - 1.0| <= 0.01") != NULL);
+	ASSERT_TRUE(strstr(out, "PASS errno == ENOENT") != NULL);
+	ASSERT_TRUE(strstr(out, "FAIL c99 open:") != NULL);
+	ASSERT_TRUE(strstr(out, "after require pass") != NULL);
+	ASSERT_TRUE(strstr(out, "unreachable after require fail") == NULL);
 
 	return 0;
 }
