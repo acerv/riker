@@ -1,0 +1,9 @@
+prefix=@PREFIX@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: riker
+Description: Simple and lean C testing framework
+Version: @VERSION@
+Libs: -L${libdir} -lriker
+Cflags: -I${includedir}

@@ -6,23 +6,27 @@ your program.
 
 ## Installation
 
-Build and install with Meson:
+Build and install with Make:
 
 ```sh
-meson setup builddir
-meson compile -C builddir
-meson install -C builddir
+make
+make install [PREFIX=/usr/local] [DESTDIR=...]
 ```
 
 To build and run the test suite:
 
 ```sh
-meson setup builddir -Dbuild_tests=true
-meson test -C builddir
+make check
 ```
 
-Link test binaries with `-lriker` (or use the `riker` Meson
-dependency).
+To generate the API documentation (requires Doxygen):
+
+```sh
+make doc
+```
+
+Link test binaries with `-lriker` (or use
+`pkg-config --cflags --libs riker`).
 
 ## Example
 

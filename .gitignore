@@ -1,4 +1,12 @@
 compile_flags.txt
-builddir/
-subprojects/*
-!subprojects/criterion.wrap
+*.o
+*.a
+*.so
+*.so.*
+riker.pc
+tests/test_runner
+tests/test_macros
+tests/test_default_main
+tests/test_c99
+Doxyfile
+doc/
