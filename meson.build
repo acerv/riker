@@ -4,7 +4,7 @@
 project(
     'riker',
     'c',
-    license : 'GPL-2.0+',
+    license : 'GPL-2.0-or-later',
     version : '1.0',
     default_options : [
         'c_std=gnu11',
@@ -27,8 +27,14 @@ my_library = library(
     'riker',
     'riker.c',
     install : true,
-    install_dir : 'lib',
     include_directories: riker_api
+)
+
+pkg = import('pkgconfig')
+pkg.generate(
+    my_library,
+    name : 'riker',
+    description : 'Simple and lean C testing framework',
 )
 
 riker = declare_dependency(
