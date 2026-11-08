@@ -42,6 +42,7 @@ int RK_TST_RES;
 static rk_session_t *session;
 static bool test_jmp_active;
 static jmp_buf test_jmp_env;
+static volatile sig_atomic_t test_pgid;
 
 /* Forward declaration specifying gnu_printf attribute */
 static void show_test_result(const char *file, const int lineno, int res,
@@ -149,6 +150,28 @@ static void run_test(rk_test_t *test)
 		test->teardown();
 }
 
+/*
+ * Tests run in their own process group, so terminal signals no longer reach
+ * them. Kill the whole group, then let the signal terminate the runner.
+ */
+static void kill_test_group(int sig)
+{
+	if (test_pgid > 0) {
+		kill(-test_pgid, SIGKILL);
+		kill(test_pgid, SIGKILL);
+	}
+
+	raise(sig);
+}
+
+static void reap_test(pid_t pid, int *status)
+{
+	kill(-pid, SIGKILL);
+	kill(pid, SIGKILL);
+	while (waitpid(pid, status, 0) == -1 && errno == EINTR)
+		;
+}
+
 static void fork_run_test(rk_test_t *test)
 {
 	int ret;
@@ -159,29 +182,52 @@ static void fork_run_test(rk_test_t *test)
 	struct timespec step = { .tv_sec = 0, .tv_nsec = 1000000L };
 	bool killed = false;
 	size_t timeout;
+	struct sigaction sa = {
+		.sa_handler = kill_test_group,
+		.sa_flags = SA_RESETHAND,
+	};
+	struct sigaction old_int;
+	struct sigaction old_term;
+	sigset_t block;
+	sigset_t old_mask;
 
 	assert(test);
+
+	sigemptyset(&sa.sa_mask);
+	sigemptyset(&block);
+	sigaddset(&block, SIGINT);
+	sigaddset(&block, SIGTERM);
+
+	sigprocmask(SIG_BLOCK, &block, &old_mask);
+	sigaction(SIGINT, &sa, &old_int);
+	sigaction(SIGTERM, &sa, &old_term);
 
 	fflush(NULL);
 	test_pid = fork();
 	if (test_pid < 0) {
 		rk_error("fork() error: %s", strerror(errno));
-		return;
+		goto out;
 	}
 
 	if (!test_pid) {
+		setpgid(0, 0);
+		sigaction(SIGINT, &old_int, NULL);
+		sigaction(SIGTERM, &old_term, NULL);
+		sigprocmask(SIG_SETMASK, &old_mask, NULL);
 		run_test(test);
 		fflush(NULL);
 		_exit(0);
 	}
 
+	setpgid(test_pid, test_pid);
+	test_pgid = test_pid;
+	sigprocmask(SIG_SETMASK, &old_mask, NULL);
+
 	timeout = test->timeout ? test->timeout : 600;
 	if (clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
 		rk_error("clock_gettime() error: %s", strerror(errno));
-		kill(test_pid, SIGKILL);
-		while (waitpid(test_pid, &status, 0) == -1 && errno == EINTR)
-			;
-		return;
+		reap_test(test_pid, &status);
+		goto out;
 	}
 
 	for (;;) {
@@ -194,7 +240,7 @@ static void fork_run_test(rk_test_t *test)
 				continue;
 			rk_error("waitpid(%i) error: %s",
 				test_pid, strerror(errno));
-			return;
+			goto out;
 		}
 
 		if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) {
@@ -204,10 +250,7 @@ static void fork_run_test(rk_test_t *test)
 				sec--;
 
 			if (sec >= 0 && (size_t)sec >= timeout) {
-				kill(test_pid, SIGKILL);
-				while (waitpid(test_pid, &status, 0) == -1 &&
-				       errno == EINTR)
-					;
+				reap_test(test_pid, &status);
 				rk_error("Test timed out after %zu s", timeout);
 				killed = true;
 				break;
@@ -226,6 +269,12 @@ static void fork_run_test(rk_test_t *test)
 				WEXITSTATUS(status));
 		}
 	}
+
+out:
+	test_pgid = 0;
+	sigaction(SIGINT, &old_int, NULL);
+	sigaction(SIGTERM, &old_term, NULL);
+	sigprocmask(SIG_SETMASK, &old_mask, NULL);
 }
 
 void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,

@@ -6,6 +6,8 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "test_helper.h"
+#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +22,7 @@ typedef struct {
 	int teardown_calls;
 	pid_t suite_pid;
 	pid_t test_pid;
+	pid_t grandchild_pid;
 } trace_buf_t;
 
 static trace_buf_t *trace;
@@ -353,6 +356,94 @@ static void fn_record_test_pid(void)
 	rk_result(TPASS, "pid recorded");
 }
 
+/* Release the runner output pipe so it doesn't wait for this process. */
+static void detach_output(void)
+{
+	int fd = open("/dev/null", O_WRONLY);
+
+	ASSERT_TRUE(fd != -1);
+	ASSERT_TRUE(dup2(fd, STDOUT_FILENO) != -1);
+	ASSERT_TRUE(dup2(fd, STDERR_FILENO) != -1);
+	close(fd);
+}
+
+static void fn_spawn_sleeper(void)
+{
+	pid_t pid = fork();
+
+	ASSERT_TRUE(pid != -1);
+	if (!pid) {
+		detach_output();
+		sleep(30);
+		_exit(0);
+	}
+
+	trace->grandchild_pid = pid;
+	sleep(30);
+}
+
+static void fn_record_and_sleep(void)
+{
+	trace->test_pid = getpid();
+	detach_output();
+	sleep(30);
+}
+
+static int pid_gone(pid_t pid)
+{
+	for (int i = 0; i < 300; i++) {
+		if (kill(pid, 0) == -1 && errno == ESRCH)
+			return 1;
+		usleep(10000);
+	}
+
+	return 0;
+}
+
+static void test_process_group_cleanup(void)
+{
+	char out[4096];
+	int rc;
+	int status;
+	pid_t killer;
+
+	trace_reset();
+	rk_suite_t s_group = {
+		.tests = (rk_test_t []) {
+			{ .run = fn_spawn_sleeper, .timeout = 1 },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_group, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->grandchild_pid > 0);
+	ASSERT_TRUE(pid_gone(trace->grandchild_pid));
+
+	trace_reset();
+	rk_suite_t s_int = {
+		.setup = fn_record_suite_pid,
+		.tests = (rk_test_t []) {
+			{ .run = fn_record_and_sleep },
+			{ .run = NULL },
+		},
+	};
+
+	killer = fork();
+	ASSERT_TRUE(killer != -1);
+	if (!killer) {
+		for (int i = 0; i < 500 && !trace->test_pid; i++)
+			usleep(10000);
+		if (trace->suite_pid)
+			kill(trace->suite_pid, SIGINT);
+		_exit(0);
+	}
+
+	ASSERT_TRUE(run_suite_proc(&s_int, &rc, out, sizeof(out)) == -1);
+	ASSERT_TRUE(waitpid(killer, &status, 0) == killer);
+	ASSERT_TRUE(trace->test_pid > 0);
+	ASSERT_TRUE(pid_gone(trace->test_pid));
+}
+
 static void test_process_isolation_and_timeout(void)
 {
 	char out[4096];
@@ -508,6 +599,7 @@ int main(void)
 	test_structural_edge_cases();
 	test_null_session_safety();
 	test_process_isolation_and_timeout();
+	test_process_group_cleanup();
 	test_rk_brk_and_require();
 
 	ASSERT_TRUE(munmap(trace, sizeof(*trace)) == 0);
