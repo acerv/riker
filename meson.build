@@ -37,6 +37,18 @@ riker = declare_dependency(
 )
 
 if get_option('build_tests')
+    test_helper_lib = static_library(
+        'test_helper',
+        'tests/test_helper.c',
+        dependencies : riker,
+    )
+
+    test_helper = declare_dependency(
+        include_directories : include_directories('tests'),
+        link_with : [test_helper_lib],
+        dependencies : riker,
+    )
+
     test_exec = executable(
         'test_riker',
         'test_riker.c',
