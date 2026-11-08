@@ -106,6 +106,7 @@ static void test_exit_codes_and_summary(void)
 	};
 	ASSERT_TRUE(run_suite_proc(&s_pass, &rc, out, sizeof(out)) == 0);
 	ASSERT_TRUE(rc == RK_PASSED);
+	ASSERT_TRUE(strchr(out, '\033') == NULL);
 	strip_ansi(out);
 	ASSERT_TRUE(strstr(out, "Passed:  2") != NULL);
 	ASSERT_TRUE(strstr(out, "Failed:  0") != NULL);

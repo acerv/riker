@@ -8,6 +8,7 @@
 #include "riker.h"
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -54,6 +55,16 @@ static void show_test_result(const char *file, const int lineno, int res,
 		const char *fmt, va_list va)
 		__attribute__ ((format (printf, 4, 0)));
 
+static bool use_color(void)
+{
+	const char *no_color = getenv("NO_COLOR");
+
+	if (no_color && no_color[0] != '\0')
+		return false;
+
+	return isatty(STDOUT_FILENO) != 0;
+}
+
 static void show_test_result(const char *file, const int lineno, int res,
 			const char *fmt, va_list va)
 {
@@ -61,30 +72,31 @@ static void show_test_result(const char *file, const int lineno, int res,
 	size_t sfx_size;
 	size_t buf_size = sizeof(buf);
 	const char *str_res;
+	bool color = use_color();
 
 	switch (res) {
 	case TPASS:
-		str_res = COLORIZE(GREEN, "PASS", 1);
+		str_res = COLORIZE(GREEN, "PASS", color);
 		if (session)
 			session->passed++;
 		break;
 	case TFAIL:
-		str_res = COLORIZE(RED, "FAIL", 1);
+		str_res = COLORIZE(RED, "FAIL", color);
 		if (session)
 			session->failed++;
 		break;
 	case TSKIP:
-		str_res = COLORIZE(YELLOW, "SKIP", 1);
+		str_res = COLORIZE(YELLOW, "SKIP", color);
 		if (session)
 			session->skipped++;
 		break;
 	case TERROR:
-		str_res = COLORIZE(MAGENTA, "ERROR", 1);
+		str_res = COLORIZE(MAGENTA, "ERROR", color);
 		if (session)
 			session->errors++;
 		break;
 	default:
-		str_res = COLORIZE(BLUE, "INFO", 1);
+		str_res = COLORIZE(BLUE, "INFO", color);
 		break;
 	}
 
@@ -186,18 +198,20 @@ void rk_run_suite(rk_suite_t *suite)
 	else if (session->skipped)
 		result = RK_SKIPPED;
 
+	bool color = use_color();
+
 	printf("\nSummary:\n"
 		"%s:  %zu\n"
 		"%s:  %zu\n"
 		"%s: %zu\n"
 		"%s:  %zu\n",
-		COLORIZE(GREEN, "Passed", 1),
+		COLORIZE(GREEN, "Passed", color),
 		session->passed,
-		COLORIZE(RED, "Failed", 1),
+		COLORIZE(RED, "Failed", color),
 		session->failed,
-		COLORIZE(YELLOW, "Skipped", 1),
+		COLORIZE(YELLOW, "Skipped", color),
 		session->skipped,
-		COLORIZE(MAGENTA, "Errors", 1),
+		COLORIZE(MAGENTA, "Errors", color),
 		session->errors
 	);
 
