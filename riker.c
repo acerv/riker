@@ -128,26 +128,6 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 	va_start(va, fmt);
 	show_test_result(file, lineno, ttype, fmt, va);
 	va_end(va);
-
-	if (ttype == TERROR && session) {
-		switch (session->state) {
-		case SUITE_SETUP:
-			suite = session->suite;
-			if (suite && suite->teardown)
-				suite->teardown();
-			break;
-		case TEST_SETUP:
-		case TEST_RUN:
-			test = session->curr_test;
-			if (test && test->teardown)
-				test->teardown();
-			break;
-		case SUITE_TEARDOWN:
-		case TEST_TEARDOWN:
-		default:
-			break;
-		}
-	}
 }
 
 void rk_run_suite(rk_suite_t *suite)
