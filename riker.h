@@ -422,7 +422,7 @@ do { \
 /**
  * @brief Verify that pointers are in the same address.
  *
- * Recognize that `ptr1` is equal to `ptr2 and return a TPASS message if true.
+ * Recognize that `ptr1` is equal to `ptr2` and return a TPASS message if true.
  * TFAIL otherwise.
  *
  * @param ptr1 A pointer.
@@ -446,8 +446,8 @@ do { \
 /**
  * @brief Verify that pointers are not equal.
  *
- * Recognize that `ptr1` is equal to `ptr2 and return a TFAIL message if true.
- * TPASS otherwise.
+ * Recognize that `ptr1` is different from `ptr2` and return a TPASS message
+ * if true. TFAIL otherwise.
  *
  * @param ptr1 A pointer.
  * @param ptr2 A pointer.
