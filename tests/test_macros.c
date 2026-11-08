@@ -139,6 +139,24 @@ static void fn_check_ptr_mem_str(void)
 	ASSERT_TRUE(RK_TST_RES == TPASS);
 	rk_check_str_ne(s1, s2, 4);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
+	char *raw1 = malloc(4);
+	char *raw2 = malloc(4);
+	ASSERT_TRUE(raw1 != NULL && raw2 != NULL);
+	memcpy(raw1, "abcd", 4);
+	memcpy(raw2, "abce", 4);
+
+	rk_check_str_eq(raw1, raw1, 4);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_str_ne(raw1, raw2, 4);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_str_eq(NULL, raw1, 4);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_str_ne(raw1, NULL, 4);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
+	free(raw1);
+	free(raw2);
 }
 
 static void fn_single_evaluation(void)

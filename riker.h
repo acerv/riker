@@ -398,12 +398,20 @@ do { \
 	const char *_ck_s1 = (s1); \
 	const char *_ck_s2 = (s2); \
 	size_t _ck_n = (size_t)(n); \
-	if (!memcmp(_ck_s1, _ck_s2, _ck_n)) { \
-		rk_result(TPASS, "%s == %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	int _ck_len = (int)(_ck_n > 1024 ? 1024 : _ck_n); \
+	const char *_ck_p1 = _ck_s1 ? _ck_s1 : "(null)"; \
+	const char *_ck_p2 = _ck_s2 ? _ck_s2 : "(null)"; \
+	int _ck_l1 = _ck_s1 ? _ck_len : 6; \
+	int _ck_l2 = _ck_s2 ? _ck_len : 6; \
+	if (!_ck_s1 || !_ck_s2) { \
+		rk_result(TFAIL, "%s != %s (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
+	} else if (!memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+		rk_result(TPASS, "%s == %s (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} else { \
-		rk_result(TFAIL, "%s != %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+		rk_result(TFAIL, "%s != %s (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} \
 } while(0)
 
@@ -421,12 +429,20 @@ do { \
 	const char *_ck_s1 = (s1); \
 	const char *_ck_s2 = (s2); \
 	size_t _ck_n = (size_t)(n); \
-	if (memcmp(_ck_s1, _ck_s2, _ck_n)) { \
-		rk_result(TPASS, "%s != %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	int _ck_len = (int)(_ck_n > 1024 ? 1024 : _ck_n); \
+	const char *_ck_p1 = _ck_s1 ? _ck_s1 : "(null)"; \
+	const char *_ck_p2 = _ck_s2 ? _ck_s2 : "(null)"; \
+	int _ck_l1 = _ck_s1 ? _ck_len : 6; \
+	int _ck_l2 = _ck_s2 ? _ck_len : 6; \
+	if (!_ck_s1 || !_ck_s2) { \
+		rk_result(TFAIL, "%s / %s NULL (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
+	} else if (memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+		rk_result(TPASS, "%s != %s (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} else { \
-		rk_result(TFAIL, "%s == %s (%s = %s, %s = %s)", \
-			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+		rk_result(TFAIL, "%s == %s (%s = %.*s, %s = %.*s)", \
+			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} \
 } while(0)
 
