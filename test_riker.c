@@ -282,7 +282,7 @@ static void test_rk_check_types(void)
 	rk_check_eq(RK_TST_RES, TFAIL);
 }
 
-static rk_suite_t test_suite = {
+rk_suite_t test_suite = {
 	.tests = (rk_test_t []) {
 		{
 			.setup = setup_test,

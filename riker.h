@@ -13,7 +13,7 @@
 #include <stddef.h>
 
 /** @brief Latest test result. This is set all the times we call `rk_result`. */
-static int RK_TST_RES;
+extern int RK_TST_RES;
 
 /**
  * @brief Test result type.
@@ -472,7 +472,7 @@ do { \
  *
  * Override this object in order to declare your own testing suite.
  */
-static rk_suite_t test_suite;
+extern rk_suite_t test_suite;
 
 /**
  * @brief Run a testing suite.
@@ -488,6 +488,7 @@ void rk_run_suite(rk_suite_t *suite);
 int main(void)
 {
 	rk_run_suite(&test_suite);
+	return 0;
 }
 
 #endif

@@ -3,6 +3,8 @@
  * Copyright (c) 2025 Andrea Cervesato <andrea.cervesato@mailbox.org>
  */
 
+#define TEST_CUSTOM_MAIN 1
+
 #include "riker.h"
 #include <time.h>
 #include <stdio.h>
@@ -46,6 +48,7 @@ typedef struct __attribute__((packed))
 	rk_session_state_t state;
 } rk_session_t;
 
+int RK_TST_RES;
 static rk_session_t *session;
 
 /* Forward declaration specifying gnu_printf attribute */
