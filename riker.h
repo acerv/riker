@@ -138,26 +138,26 @@ do { \
 	} \
 } while(0)
 
-#define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, a, b) \
+#define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, str_a, val_a, str_b, val_b) \
 do { \
 	size_t pos__; \
 	char *str__ = buf; \
 	size_t size__ = buf_size; \
-	pos__ = (size_t)snprintf(str__, size__, "(%s = ", #a); \
+	pos__ = (size_t)snprintf(str__, size__, "(%s = ", (str_a)); \
 	size__ -= pos__; \
 	if (buf_size > size__) { \
 		str__ += pos__; \
-		RK_SNPRINTF_NUM_(pos__, str__, size__, a); \
+		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_a)); \
 		size__ -= pos__; \
 	} \
 	if (buf_size > size__) { \
 		str__ += pos__; \
-		pos__ = (size_t)snprintf(str__, size__, ", %s = ", #b); \
+		pos__ = (size_t)snprintf(str__, size__, ", %s = ", (str_b)); \
 		size__ -= pos__; \
 	} \
 	if (buf_size > size__) { \
 		str__ += pos__; \
-		RK_SNPRINTF_NUM_(pos__, str__, size__, b); \
+		RK_SNPRINTF_NUM_(pos__, str__, size__, (val_b)); \
 		size__ -= pos__; \
 	} \
 	if (buf_size > size__) { \
@@ -167,7 +167,7 @@ do { \
 } while(0)
 #else
 #define RK_SNPRINTF_NUM_(ret, buf, buf_size, num) (ret = 0)
-#define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, a, b) \
+#define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, str_a, val_a, str_b, val_b) \
 do { \
 	size_t s__ = buf_size; \
 	if (s__ == buf_size) {} \
@@ -176,11 +176,13 @@ do { \
 
 #define RK_CHECK_NUM_(a, b, op) \
 do { \
-	int ttype__ = (((a) op (b)) ? TPASS : TFAIL); \
+	__auto_type _rk_a = (a); \
+	__auto_type _rk_b = (b); \
+	int ttype__ = (((_rk_a) op (_rk_b)) ? TPASS : TFAIL); \
 	if (ttype__ == TFAIL) { \
 		char buf__[4096] = {0}; \
 		size_t buf_size__ = 4096; \
-		RK_SNPRINTF_NUM_ARGS_DEBUG_(buf__, buf_size__, a, b); \
+		RK_SNPRINTF_NUM_ARGS_DEBUG_(buf__, buf_size__, #a, _rk_a, #b, _rk_b); \
 		rk_result(ttype__, "%s %s %s %s", #a, #op, #b, buf__); \
 	} else { \
 		rk_result(ttype__, "%s %s %s", #a, #op, #b); \
