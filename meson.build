@@ -49,6 +49,14 @@ if get_option('build_tests')
         dependencies : riker,
     )
 
+    test_runner = executable(
+        'test_runner',
+        'tests/test_runner.c',
+        dependencies : test_helper,
+    )
+
+    test('test_runner', test_runner)
+
     test_exec = executable(
         'test_riker',
         'test_riker.c',
