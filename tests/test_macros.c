@@ -161,6 +161,19 @@ static void fn_check_ptr_mem_str(void)
 	rk_check_str_ne(raw1, NULL, 4);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 
+	rk_check_cstr_eq(s1, s2);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_cstr_eq(s1, "cia");
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_cstr_ne(s1, "cia");
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_cstr_ne(s1, s2);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_cstr_eq(NULL, s1);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_cstr_ne(s1, NULL);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+
 	free(raw1);
 	free(raw2);
 }

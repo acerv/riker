@@ -500,6 +500,58 @@ do { \
 } while(0)
 
 /**
+ * @brief Verify that two NUL-terminated strings are equal.
+ *
+ * Compare `s1` and `s2` with `strcmp()` and report TPASS if equal, TFAIL
+ * otherwise (including when either pointer is NULL).
+ *
+ * @param s1 First NUL-terminated string.
+ * @param s2 Second NUL-terminated string.
+ */
+#define rk_check_cstr_eq(s1, s2) \
+do { \
+	const char *_ck_s1 = (s1); \
+	const char *_ck_s2 = (s2); \
+	if (!_ck_s1 || !_ck_s2) { \
+		rk_result(TFAIL, "%s / %s NULL (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1 ? _ck_s1 : "(null)", \
+			#s2, _ck_s2 ? _ck_s2 : "(null)"); \
+	} else if (!strcmp(_ck_s1, _ck_s2)) { \
+		rk_result(TPASS, "%s == %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} else { \
+		rk_result(TFAIL, "%s != %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} \
+} while(0)
+
+/**
+ * @brief Verify that two NUL-terminated strings are different.
+ *
+ * Compare `s1` and `s2` with `strcmp()` and report TPASS if different, TFAIL
+ * if equal or when either pointer is NULL.
+ *
+ * @param s1 First NUL-terminated string.
+ * @param s2 Second NUL-terminated string.
+ */
+#define rk_check_cstr_ne(s1, s2) \
+do { \
+	const char *_ck_s1 = (s1); \
+	const char *_ck_s2 = (s2); \
+	if (!_ck_s1 || !_ck_s2) { \
+		rk_result(TFAIL, "%s / %s NULL (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1 ? _ck_s1 : "(null)", \
+			#s2, _ck_s2 ? _ck_s2 : "(null)"); \
+	} else if (strcmp(_ck_s1, _ck_s2)) { \
+		rk_result(TPASS, "%s != %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} else { \
+		rk_result(TFAIL, "%s == %s (%s = %s, %s = %s)", \
+			#s1, #s2, #s1, _ck_s1, #s2, _ck_s2); \
+	} \
+} while(0)
+
+/**
  * @brief Verify that pointers are in the same address.
  *
  * Recognize that `ptr1` is equal to `ptr2` and return a TPASS message if true.
