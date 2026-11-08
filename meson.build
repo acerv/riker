@@ -65,6 +65,14 @@ if get_option('build_tests')
 
     test('test_macros', test_macros)
 
+    test_default_main = executable(
+        'test_default_main',
+        ['tests/test_default_main.c', 'tests/test_default_main_aux.c'],
+        dependencies : riker,
+    )
+
+    test('test_default_main', test_default_main)
+
     test_exec = executable(
         'test_riker',
         'test_riker.c',
