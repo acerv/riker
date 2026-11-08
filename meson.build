@@ -37,6 +37,25 @@ pkg.generate(
     description : 'Simple and lean C testing framework',
 )
 
+doxygen = find_program('doxygen', required : false)
+if doxygen.found()
+    doxyfile = configure_file(
+        input : 'Doxyfile.in',
+        output : 'Doxyfile',
+        configuration : {
+            'PROJECT_NAME' : meson.project_name(),
+            'PROJECT_VERSION' : meson.project_version(),
+            'INPUT' : meson.current_source_dir() / 'riker.h',
+            'OUTPUT' : meson.current_build_dir() / 'doc',
+        },
+    )
+
+    run_target(
+        'doc',
+        command : [doxygen, doxyfile],
+    )
+endif
+
 riker = declare_dependency(
     include_directories: riker_api,
     link_with: [my_library]
