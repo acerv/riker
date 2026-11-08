@@ -64,19 +64,23 @@ void show_test_result(const char *file, const int lineno, int res,
 	switch (res) {
 	case TPASS:
 		str_res = COLORIZE(GREEN, "PASS", 1);
-		session->passed++;
+		if (session)
+			session->passed++;
 		break;
 	case TFAIL:
 		str_res = COLORIZE(RED, "FAIL", 1);
-		session->failed++;
+		if (session)
+			session->failed++;
 		break;
 	case TSKIP:
 		str_res = COLORIZE(YELLOW, "SKIP", 1);
-		session->skipped++;
+		if (session)
+			session->skipped++;
 		break;
 	case TERROR:
 		str_res = COLORIZE(MAGENTA, "ERROR", 1);
-		session->errors++;
+		if (session)
+			session->errors++;
 		break;
 	default:
 		str_res = COLORIZE(BLUE, "INFO", 1);
@@ -125,7 +129,7 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 	show_test_result(file, lineno, ttype, fmt, va);
 	va_end(va);
 
-	if (ttype == TERROR) {
+	if (ttype == TERROR && session) {
 		switch (session->state) {
 		case SUITE_SETUP:
 			suite = session->suite;
@@ -151,19 +155,22 @@ void rk_run_suite(rk_suite_t *suite)
 	int result = RK_PASSED;
 	int ret;
 
+	void *mem;
+
 	assert(suite);
 
-	session = mmap(NULL,
+	mem = mmap(NULL,
 		sizeof(rk_session_t),
 		PROT_READ | PROT_WRITE,
 		MAP_SHARED | MAP_ANONYMOUS,
 		-1, 0);
 
-	if (session == MAP_FAILED) {
-		rk_result(TERROR, "mmap() error: %s\n", strerror(errno));
-		return;
+	if (mem == MAP_FAILED) {
+		rk_result(TERROR, "mmap() error: %s", strerror(errno));
+		exit(RK_ERROR);
 	}
 
+	session = mem;
 	session->suite = suite;
 
 	if (suite->setup) {
@@ -206,8 +213,9 @@ void rk_run_suite(rk_suite_t *suite)
 	);
 
 	ret = munmap(session, sizeof(rk_session_t));
+	session = NULL;
 	if (ret == -1)
-		rk_result(TERROR, "munmap() error: %s\n", strerror(errno));
+		rk_result(TERROR, "munmap() error: %s", strerror(errno));
 
 	exit(result);
 }
