@@ -541,11 +541,12 @@ do { \
 /**
  * @brief Verify that two strings contain the same data.
  *
- * Verify that `s1` and `s2` contain the same `n` bytes.
+ * Verify that `s1` and `s2` are equal in the first `n` characters, stopping
+ * at the first NUL byte as `strncmp()` does.
  *
  * @param s1 First pointer to string data.
  * @param s2 Second pointer to string data.
- * @param n Length of data in bytes.
+ * @param n Maximum number of characters to compare.
  */
 #define rk_check_str_eq(s1, s2, n) \
 do { \
@@ -560,7 +561,7 @@ do { \
 	if (!_ck_s1 || !_ck_s2) { \
 		rk_result(TFAIL, "%s != %s (%s = %.*s, %s = %.*s)", \
 			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
-	} else if (!memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+	} else if (!strncmp(_ck_s1, _ck_s2, _ck_n)) { \
 		rk_result(TPASS, "%s == %s (%s = %.*s, %s = %.*s)", \
 			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} else { \
@@ -572,11 +573,12 @@ do { \
 /**
  * @brief Verify that two strings do not contain the same data.
  *
- * Verify that `s1` and `s2` differ within `n` bytes.
+ * Verify that `s1` and `s2` differ in the first `n` characters, stopping
+ * at the first NUL byte as `strncmp()` does.
  *
  * @param s1 First pointer to string data.
  * @param s2 Second pointer to string data.
- * @param n Length of data in bytes.
+ * @param n Maximum number of characters to compare.
  */
 #define rk_check_str_ne(s1, s2, n) \
 do { \
@@ -591,7 +593,7 @@ do { \
 	if (!_ck_s1 || !_ck_s2) { \
 		rk_result(TFAIL, "%s / %s NULL (%s = %.*s, %s = %.*s)", \
 			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
-	} else if (memcmp(_ck_s1, _ck_s2, _ck_n)) { \
+	} else if (strncmp(_ck_s1, _ck_s2, _ck_n)) { \
 		rk_result(TPASS, "%s != %s (%s = %.*s, %s = %.*s)", \
 			#s1, #s2, #s1, _ck_l1, _ck_p1, #s2, _ck_l2, _ck_p2); \
 	} else { \

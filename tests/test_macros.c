@@ -168,6 +168,16 @@ static void fn_check_ptr_mem_str(void)
 	rk_check_str_ne(raw1, NULL, 4);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 
+	char tail1[8] = "ab\0XXXX";
+	char tail2[8] = "ab\0YYYY";
+
+	rk_check_str_eq(tail1, tail2, sizeof(tail1));
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	rk_check_str_ne(tail1, tail2, sizeof(tail1));
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_str_ne("ab", "abc", 16);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+
 	rk_check_cstr_eq(s1, s2);
 	ASSERT_TRUE(RK_TST_RES == TPASS);
 	rk_check_cstr_eq(s1, "cia");
