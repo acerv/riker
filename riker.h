@@ -11,6 +11,7 @@
 #ifndef RIKER_H
 #define RIKER_H
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -127,6 +128,21 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		__attribute__ ((format (printf, 4, 5)));
 
 /**
+ * @brief Internal helper backing @ref rk_result_errno.
+ *
+ * @param file Source file path where the result was reported.
+ * @param lineno Source line number where the result was reported.
+ * @param ttype Result classification.
+ * @param errnum Captured `errno` value to append via `strerror()`.
+ * @param fmt printf-style format string.
+ * @param ... Arguments for `fmt`.
+ */
+void rk_result_errno_(const char *file, const int lineno,
+		rk_test_result_t ttype, int errnum,
+		const char *fmt, ...)
+		__attribute__ ((format (printf, 5, 6)));
+
+/**
  * @brief Internal helper backing @ref rk_brk and @ref rk_require.
  *
  * @param file Source file path where the break was reported.
@@ -235,6 +251,47 @@ do { \
 	if (ttype != TINFO) \
 		RK_TST_RES = ttype; \
 	rk_result_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__); \
+} while (0)
+
+/**
+ * @brief Send a test result with captured `errno` description to stdout.
+ *
+ * Captures `errno` before formatting, appends `: <strerror(errno)> (errno)`
+ * to the message, updates @ref RK_TST_RES when `ttype` is not `TINFO`, and
+ * preserves `errno`.
+ *
+ * @param ttype Message type.
+ * @param arg_fmt printf-style format string.
+ * @param ... Arguments for `arg_fmt`.
+ */
+#define rk_result_errno(ttype, arg_fmt, ...) do { \
+	int _rk_err = errno; \
+	if (ttype != TINFO) \
+		RK_TST_RES = ttype; \
+	rk_result_errno_(__FILE__, __LINE__, (ttype), _rk_err, \
+		(arg_fmt), ##__VA_ARGS__); \
+} while (0)
+
+/**
+ * @brief Verify that `errno` matches `expected`.
+ *
+ * Captures `errno` immediately, reports `TPASS` if it equals `expected` or
+ * `TFAIL` with descriptions otherwise, and preserves `errno`.
+ *
+ * @param expected Expected `errno` value.
+ */
+#define rk_check_errno(expected) do { \
+	int _rk_err = errno; \
+	int _rk_exp = (expected); \
+	if (_rk_err == _rk_exp) { \
+		rk_result(TPASS, "errno == %s (%d: %s)", \
+			#expected, _rk_err, strerror(_rk_err)); \
+	} else { \
+		rk_result(TFAIL, "errno != %s (got %d: %s, expected %d: %s)", \
+			#expected, _rk_err, strerror(_rk_err), \
+			_rk_exp, strerror(_rk_exp)); \
+	} \
+	errno = _rk_err; \
 } while (0)
 
 /**

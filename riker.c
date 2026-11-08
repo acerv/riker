@@ -238,6 +238,27 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 	va_end(va);
 }
 
+void rk_result_errno_(const char *file, const int lineno,
+		rk_test_result_t ttype, int errnum,
+		const char *fmt, ...)
+{
+	char msg[1024];
+	va_list va;
+	int len;
+
+	va_start(va, fmt);
+	len = vsnprintf(msg, sizeof(msg), fmt, va);
+	va_end(va);
+
+	if (len < 0)
+		msg[0] = '\0';
+
+	rk_result_(file, lineno, ttype, "%s: %s (%d)",
+		msg, strerror(errnum), errnum);
+
+	errno = errnum;
+}
+
 void rk_brk_(const char *file, const int lineno, rk_test_result_t ttype,
 		const char *fmt, ...)
 {

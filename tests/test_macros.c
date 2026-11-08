@@ -6,6 +6,7 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "test_helper.h"
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -377,11 +378,47 @@ static void test_truncation(void)
 	ASSERT_TRUE(strstr(out, "Failed:  1") != NULL);
 }
 
+static void fn_errno_checks(void)
+{
+	errno = ENOENT;
+	rk_check_errno(ENOENT);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	ASSERT_TRUE(errno == ENOENT);
+
+	rk_check_errno(EACCES);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	ASSERT_TRUE(errno == ENOENT);
+
+	rk_result_errno(TFAIL, "open %s", "/missing");
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	ASSERT_TRUE(errno == ENOENT);
+}
+
+static void test_errno_helpers(void)
+{
+	char out[4096];
+	int rc;
+
+	rk_suite_t s = {
+		.tests = (rk_test_t []) {
+			{ .run = fn_errno_checks },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	strip_ansi(out);
+	ASSERT_TRUE(strstr(out, "PASS errno == ENOENT") != NULL);
+	ASSERT_TRUE(strstr(out, "FAIL errno != EACCES") != NULL);
+	ASSERT_TRUE(strstr(out, "FAIL open /missing:") != NULL);
+}
+
 int main(void)
 {
 	test_tinfo_behavior();
 	test_checks_and_output();
 	test_type_formatting();
 	test_truncation();
+	test_errno_helpers();
 	return 0;
 }
