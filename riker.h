@@ -248,9 +248,10 @@ do { \
  * @param ... Arguments for `arg_fmt`.
  */
 #define rk_result(ttype, arg_fmt, ...) do { \
-	if (ttype != TINFO) \
-		RK_TST_RES = ttype; \
-	rk_result_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__); \
+	rk_test_result_t _rk_t = (ttype); \
+	if (_rk_t != TINFO) \
+		RK_TST_RES = _rk_t; \
+	rk_result_(__FILE__, __LINE__, _rk_t, (arg_fmt), ##__VA_ARGS__); \
 } while (0)
 
 /**
@@ -266,9 +267,10 @@ do { \
  */
 #define rk_result_errno(ttype, arg_fmt, ...) do { \
 	int _rk_err = errno; \
-	if (ttype != TINFO) \
-		RK_TST_RES = ttype; \
-	rk_result_errno_(__FILE__, __LINE__, (ttype), _rk_err, \
+	rk_test_result_t _rk_t = (ttype); \
+	if (_rk_t != TINFO) \
+		RK_TST_RES = _rk_t; \
+	rk_result_errno_(__FILE__, __LINE__, _rk_t, _rk_err, \
 		(arg_fmt), ##__VA_ARGS__); \
 } while (0)
 
@@ -320,9 +322,10 @@ do { \
  * @param ... Arguments for `arg_fmt`.
  */
 #define rk_brk(ttype, arg_fmt, ...) do { \
-	if (ttype != TINFO) \
-		RK_TST_RES = ttype; \
-	rk_brk_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__); \
+	rk_test_result_t _rk_t = (ttype); \
+	if (_rk_t != TINFO) \
+		RK_TST_RES = _rk_t; \
+	rk_brk_(__FILE__, __LINE__, _rk_t, (arg_fmt), ##__VA_ARGS__); \
 } while (0)
 
 /**

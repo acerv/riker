@@ -31,6 +31,12 @@ static int next_b_diff(void)
 	return 20;
 }
 
+static rk_test_result_t next_fail(void)
+{
+	eval_a_count++;
+	return TFAIL;
+}
+
 static void fn_tinfo_preserves_res(void)
 {
 	rk_result(TPASS, "set pass");
@@ -201,6 +207,32 @@ static void fn_single_evaluation(void)
 	rk_check_eq(a, b = 11);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 	ASSERT_TRUE(b == 11);
+
+	eval_a_count = 0;
+	rk_check_expr(next_a() == 10);
+	ASSERT_TRUE(RK_TST_RES == TPASS);
+	ASSERT_TRUE(eval_a_count == 1);
+
+	eval_a_count = 0;
+	rk_result(next_fail(), "single eval");
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	ASSERT_TRUE(eval_a_count == 1);
+
+	eval_a_count = 0;
+	rk_result_errno(next_fail(), "single eval");
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	ASSERT_TRUE(eval_a_count == 1);
+}
+
+static void fn_brk_single_evaluation(void)
+{
+	eval_a_count = 0;
+	rk_brk(next_fail(), "single eval");
+}
+
+static void td_brk_single_evaluation(void)
+{
+	rk_result(TINFO, "brk evals=%d", eval_a_count);
 }
 
 static void fn_type_matrix(void)
@@ -312,6 +344,10 @@ static void test_checks_and_output(void)
 			{ .run = fn_check_expr_and_num },
 			{ .run = fn_check_ptr_mem_str },
 			{ .run = fn_single_evaluation },
+			{
+				.run = fn_brk_single_evaluation,
+				.teardown = td_brk_single_evaluation,
+			},
 			{ .run = NULL },
 		},
 	};
@@ -319,6 +355,8 @@ static void test_checks_and_output(void)
 	ASSERT_TRUE(rc == RK_FAILED);
 	strip_ansi(out);
 
+	ASSERT_TRUE(strstr(out, "killed with signal") == NULL);
+	ASSERT_TRUE(strstr(out, "brk evals=1") != NULL);
 	ASSERT_TRUE(strstr(out, "FAIL a == c (a = 10, c = 20)") != NULL);
 	ASSERT_TRUE(strstr(out, "FAIL s1 != s3 (s1 = ciao, s3 = cia0)") != NULL);
 	ASSERT_TRUE(strstr(out, "0x0x") == NULL);
