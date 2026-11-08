@@ -129,6 +129,12 @@ static void fn_check_ptr_mem_str(void)
 	ASSERT_TRUE(RK_TST_RES == TPASS);
 	rk_check_mem_ne(s1, s2, 4);
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_mem_eq(NULL, s1, 4);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_mem_ne(s1, NULL, 4);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
+	rk_check_mem_eq(NULL, NULL, 0);
+	ASSERT_TRUE(RK_TST_RES == TFAIL);
 
 	rk_check_str_eq(s1, s2, 4);
 	ASSERT_TRUE(RK_TST_RES == TPASS);

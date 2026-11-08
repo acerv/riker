@@ -361,7 +361,10 @@ do { \
 	const void *_ck_m1 = (m1); \
 	const void *_ck_m2 = (m2); \
 	size_t _ck_n = (size_t)(n); \
-	if (!memcmp(_ck_m1, _ck_m2, _ck_n)) \
+	if (!_ck_m1 || !_ck_m2) \
+		rk_result(TFAIL, "%s / %s NULL (%s = %p, %s = %p)", \
+			#m1, #m2, #m1, _ck_m1, #m2, _ck_m2); \
+	else if (!memcmp(_ck_m1, _ck_m2, _ck_n)) \
 		rk_result(TPASS, "%s == %s", #m1, #m2); \
 	else \
 		rk_result(TFAIL, "%s != %s", #m1, #m2); \
@@ -381,7 +384,10 @@ do { \
 	const void *_ck_m1 = (m1); \
 	const void *_ck_m2 = (m2); \
 	size_t _ck_n = (size_t)(n); \
-	if (memcmp(_ck_m1, _ck_m2, _ck_n)) \
+	if (!_ck_m1 || !_ck_m2) \
+		rk_result(TFAIL, "%s / %s NULL (%s = %p, %s = %p)", \
+			#m1, #m2, #m1, _ck_m1, #m2, _ck_m2); \
+	else if (memcmp(_ck_m1, _ck_m2, _ck_n)) \
 		rk_result(TPASS, "%s != %s", #m1, #m2); \
 	else \
 		rk_result(TFAIL, "%s == %s", #m1, #m2); \
