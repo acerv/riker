@@ -29,25 +29,12 @@
 #define MAGENTA(str) BOLD "\033[35m" str RESET
 #define COLORIZE(color, str, colorize) (colorize ? color(str) : str)
 
-typedef enum
-{
-	SUITE_SETUP = 0,
-	SUITE_TEARDOWN,
-	TEST_RUN,
-	TEST_SETUP,
-	TEST_TEARDOWN,
-} rk_session_state_t;
-
 typedef struct
 {
 	size_t passed;
 	size_t failed;
 	size_t skipped;
 	size_t errors;
-	rk_suite_t *suite;
-	rk_test_t *curr_test;
-	rk_session_state_t state;
-	int pad;
 } rk_session_t;
 
 int RK_TST_RES;
@@ -127,22 +114,16 @@ static void run_test(rk_test_t *test)
 	size_t prev_err = session->errors;
 	size_t prev_fail = session->failed;
 
-	if (test->setup) {
-		session->state = TEST_SETUP;
+	if (test->setup)
 		test->setup();
-	}
 
 	if (session->errors == prev_err &&
 	    session->failed == prev_fail &&
-	    test->run) {
-		session->state = TEST_RUN;
+	    test->run)
 		test->run();
-	}
 
-	if (test->teardown) {
-		session->state = TEST_TEARDOWN;
+	if (test->teardown)
 		test->teardown();
-	}
 }
 
 static void fork_run_test(rk_test_t *test)
@@ -255,26 +236,17 @@ void rk_run_suite(rk_suite_t *suite)
 	}
 
 	session = mem;
-	session->suite = suite;
 
-	if (suite->setup) {
-		session->state = SUITE_SETUP;
+	if (suite->setup)
 		suite->setup();
-	}
 
 	if (suite->tests) {
-		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++) {
-			session->curr_test = &suite->tests[i];
-			fork_run_test(session->curr_test);
-		}
-
-		session->curr_test = NULL;
+		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++)
+			fork_run_test(&suite->tests[i]);
 	}
 
-	if (suite->teardown) {
-		session->state = SUITE_TEARDOWN;
+	if (suite->teardown)
 		suite->teardown();
-	}
 
 	if (session->failed || session->errors)
 		result = RK_FAILED;
