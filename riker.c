@@ -6,17 +6,14 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "riker.h"
-#include <time.h>
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <sys/wait.h>
 #include <sys/mman.h>
 
 #define RESET "\033[0m"
