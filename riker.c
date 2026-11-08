@@ -172,15 +172,15 @@ void rk_run_suite(rk_suite_t *suite)
 		session->curr_test = NULL;
 	}
 
-	if (session->failed || session->errors)
-		result = RK_FAILED;
-	else if (session->skipped)
-		result = RK_SKIPPED;
-
 	if (suite->teardown) {
 		session->state = SUITE_TEARDOWN;
 		suite->teardown();
 	}
+
+	if (session->failed || session->errors)
+		result = RK_FAILED;
+	else if (session->skipped)
+		result = RK_SKIPPED;
 
 	printf("\nSummary:\n"
 		"%s:  %lu\n"
