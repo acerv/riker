@@ -127,8 +127,6 @@ void rk_result_(const char *file, const int lineno, rk_test_result_t ttype,
 		const char *fmt, ...)
 {
 	va_list va;
-	rk_test_t *test;
-	rk_suite_t *suite;
 
 	va_start(va, fmt);
 	show_test_result(file, lineno, ttype, fmt, va);
