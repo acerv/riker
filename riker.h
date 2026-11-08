@@ -168,8 +168,8 @@ do { \
 
 #define RK_SNPRINTF_NUM_ARGS_DEBUG_(buf, buf_size, str_a, val_a, str_b, val_b) \
 do { \
-	char a_buf__[2048] = {0}; \
-	char b_buf__[2048] = {0}; \
+	char a_buf__[1024] = {0}; \
+	char b_buf__[1024] = {0}; \
 	size_t len_a__ = 0; \
 	size_t len_b__ = 0; \
 	RK_SNPRINTF_NUM_(len_a__, a_buf__, sizeof(a_buf__), (val_a)); \
