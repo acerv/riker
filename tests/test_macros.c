@@ -256,6 +256,8 @@ static void fn_type_matrix(void)
 	char ms2[] = "bar";
 	const char *cs1 = "abc";
 	const char *cs2 = "def";
+	char *np1 = NULL;
+	const char *np2 = "x";
 	int x = 1, y = 2;
 	void *p1 = &x;
 	void *p2 = &y;
@@ -291,6 +293,7 @@ static void fn_type_matrix(void)
 	ASSERT_TRUE(RK_TST_RES == TFAIL);
 	rk_check_eq(ms1, ms2);
 	rk_check_eq(cs1, cs2);
+	rk_check_eq(np1, np2);
 	rk_check_eq(p1, p2);
 }
 
@@ -395,6 +398,7 @@ static void test_type_formatting(void)
 	ASSERT_TRUE(strstr(out, "(ld1 = 1.5, ld2 = 2.5)") != NULL);
 	ASSERT_TRUE(strstr(out, "(ms1 = foo, ms2 = bar)") != NULL);
 	ASSERT_TRUE(strstr(out, "(cs1 = abc, cs2 = def)") != NULL);
+	ASSERT_TRUE(strstr(out, "(np1 = (null), np2 = x)") != NULL);
 	ASSERT_TRUE(strstr(out, "(p1 = 0x") != NULL);
 }
 

@@ -187,11 +187,22 @@ static inline int rk_snprintf_float_(char *buf, size_t size, const char *fmt,
 	return snprintf(buf, size, "%g", (double)val);
 }
 
+static inline int rk_snprintf_str_(char *buf, size_t size, const char *fmt,
+				   const char *val)
+{
+	int max = size > 1024 ? 1023 : (int)size - 1;
+
+	(void)fmt;
+	return snprintf(buf, size, "%.*s", max, val ? val : "(null)");
+}
+
 #define RK_SNPRINTF_NUM_(ret, buf, buf_size, num) \
 do { \
 	if (buf_size > 0) { \
 		int sn_ret__ = _Generic((num), \
 			float: rk_snprintf_float_, \
+			char *: rk_snprintf_str_, \
+			const char *: rk_snprintf_str_, \
 			default: snprintf)(buf, buf_size, \
 					   RK_PRINT_FMT_((num)), (num)); \
 		(ret) = sn_ret__ > 0 ? (size_t)sn_ret__ : (size_t)0; \
