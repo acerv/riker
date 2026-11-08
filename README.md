@@ -63,4 +63,16 @@ gcc -std=gnu11 test.c -lriker -o test
 
 Define `TEST_CUSTOM_MAIN` before `#include <riker.h>` if you provide your
 own `main()` or include `riker.h` across multiple translation units.
-Set `RIKER_NO_FORK=1` to run tests in-process when debugging.
+
+## Reference
+
+- Reporting: `rk_result()`, `rk_result_errno()`, `rk_error()`, `rk_brk()`,
+  `rk_require()`
+- Checks: `rk_check_expr()`, `rk_check_{eq,ne,gt,ge,lt,le}()`,
+  `rk_check_near()`, `rk_check_ptr_{null,not_null,eq,ne}()`,
+  `rk_check_mem_{eq,ne}()`, `rk_check_str_{eq,ne}()`,
+  `rk_check_cstr_{eq,ne}()`, `rk_check_errno()`
+- Isolation: each `rk_test_t` runs in a forked child with `.timeout`
+  seconds (default 600s)
+- Environment: `RIKER_NO_FORK=1` (in-process debugging), `NO_COLOR=1`
+  (disable ANSI colors)
