@@ -102,12 +102,17 @@ static void run_test(rk_test_t *test)
 {
 	assert(test);
 
+	size_t prev_err = session->errors;
+	size_t prev_fail = session->failed;
+
 	if (test->setup) {
 		session->state = TEST_SETUP;
 		test->setup();
 	}
 
-	if (test->run) {
+	if (session->errors == prev_err &&
+	    session->failed == prev_fail &&
+	    test->run) {
 		session->state = TEST_RUN;
 		test->run();
 	}
