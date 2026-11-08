@@ -477,11 +477,11 @@ extern rk_suite_t test_suite;
 /**
  * @brief Run a testing suite.
  *
- * Run all tests inside a testing suite and return the ending result.
+ * Run all tests inside a testing suite and exit with the ending result.
  *
  * @param suite Testing suite object.
  */
-void rk_run_suite(rk_suite_t *suite);
+void rk_run_suite(rk_suite_t *suite) __attribute__ ((noreturn));
 
 #ifndef TEST_CUSTOM_MAIN
 

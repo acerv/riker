@@ -338,10 +338,8 @@ int main(void)
 	pid = fork();
 	assert(pid != -1);
 
-	if (!pid) {
+	if (!pid)
 		rk_run_suite(&test_suite);
-		exit(0);
-	}
 
 	assert(waitpid(pid, &status, 0) != -1);
 	assert(WIFEXITED(status));
