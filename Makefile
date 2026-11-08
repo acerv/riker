@@ -100,6 +100,7 @@ Doxyfile: Doxyfile.in Makefile
 	sed -e 's|@PROJECT_NAME@|riker|g' \
 	    -e 's|@PROJECT_VERSION@|$(VERSION)|g' \
 	    -e 's|@INPUT@|$(CURDIR)/riker.h|g' \
+	    -e 's|@MAINPAGE@|$(CURDIR)/README.md|g' \
 	    -e 's|@OUTPUT@|$(CURDIR)/doc|g' \
 	    $< > $@
 

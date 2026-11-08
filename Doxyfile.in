@@ -1,7 +1,8 @@
 PROJECT_NAME           = "@PROJECT_NAME@"
 PROJECT_NUMBER         = "@PROJECT_VERSION@"
 OUTPUT_DIRECTORY       = "@OUTPUT@"
-INPUT                  = "@INPUT@"
+INPUT                  = "@INPUT@" "@MAINPAGE@"
+USE_MDFILE_AS_MAINPAGE = "@MAINPAGE@"
 OPTIMIZE_OUTPUT_FOR_C  = YES
 EXTRACT_ALL            = NO
 GENERATE_HTML          = YES
