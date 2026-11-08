@@ -32,6 +32,36 @@ Link test binaries with `-lriker` (or use
 
 ```c
 #include <riker.h>
+#include <stdlib.h>
+
+static char *buf;
+
+static void suite_setup(void)
+{
+	rk_result(TINFO, "suite setup");
+}
+
+static void suite_teardown(void)
+{
+	rk_result(TINFO, "suite teardown");
+}
+
+static void test_setup(void)
+{
+	buf = malloc(64);
+}
+
+static void test_teardown(void)
+{
+	free(buf);
+	buf = NULL;
+}
+
+static void test_buffer(void)
+{
+	rk_require(buf != NULL);
+	rk_check_ptr_not_null(buf);
+}
 
 static void test_math(void)
 {
@@ -41,18 +71,16 @@ static void test_math(void)
 	rk_check_gt(a, 0);
 }
 
-static void test_string(void)
-{
-	const char *s = "riker";
-
-	rk_check_ptr_not_null(s);
-	rk_check_str_eq(s, "riker", 5);
-}
-
 rk_suite_t test_suite = {
+	.setup = suite_setup,
+	.teardown = suite_teardown,
 	.tests = (rk_test_t []) {
+		{
+			.setup = test_setup,
+			.run = test_buffer,
+			.teardown = test_teardown,
+		},
 		{ .run = test_math },
-		{ .run = test_string },
 		{ .run = NULL },
 	},
 };
