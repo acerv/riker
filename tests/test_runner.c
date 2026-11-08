@@ -6,6 +6,7 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "test_helper.h"
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -323,6 +324,66 @@ static void test_null_session_safety(void)
 	ASSERT_TRUE(WEXITSTATUS(status) == 0);
 }
 
+static void fn_crash_signal(void)
+{
+	raise(SIGKILL);
+}
+
+static void fn_slow_timeout(void)
+{
+	sleep(5);
+}
+
+static void fn_exit_nonzero(void)
+{
+	_exit(7);
+}
+
+static void test_process_isolation_and_timeout(void)
+{
+	char out[4096];
+	int rc;
+
+	trace_reset();
+	rk_suite_t s_crash = {
+		.tests = (rk_test_t []) {
+			{ .run = fn_crash_signal },
+			{ .run = hook_guarded_run },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_crash, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->run_called == 1);
+	ASSERT_TRUE(strstr(out, "killed with signal") != NULL);
+
+	trace_reset();
+	rk_suite_t s_exit = {
+		.tests = (rk_test_t []) {
+			{ .run = fn_exit_nonzero },
+			{ .run = hook_guarded_run },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_exit, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->run_called == 1);
+	ASSERT_TRUE(strstr(out, "exited with status 7") != NULL);
+
+	trace_reset();
+	rk_suite_t s_timeout = {
+		.tests = (rk_test_t []) {
+			{ .run = fn_slow_timeout, .timeout = 1 },
+			{ .run = hook_guarded_run },
+			{ .run = NULL },
+		},
+	};
+	ASSERT_TRUE(run_suite_proc(&s_timeout, &rc, out, sizeof(out)) == 0);
+	ASSERT_TRUE(rc == RK_FAILED);
+	ASSERT_TRUE(trace->run_called == 1);
+	ASSERT_TRUE(strstr(out, "Test timed out after 1 s") != NULL);
+}
+
 int main(void)
 {
 	void *mem = mmap(NULL, sizeof(*trace), PROT_READ | PROT_WRITE,
@@ -335,6 +396,7 @@ int main(void)
 	test_lifecycle_and_isolation();
 	test_structural_edge_cases();
 	test_null_session_safety();
+	test_process_isolation_and_timeout();
 
 	ASSERT_TRUE(munmap(trace, sizeof(*trace)) == 0);
 	return 0;

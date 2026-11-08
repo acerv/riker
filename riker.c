@@ -6,8 +6,10 @@
 #define TEST_CUSTOM_MAIN 1
 
 #include "riker.h"
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
+#include <signal.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -15,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 #include <sys/mman.h>
 
 #define RESET "\033[0m"
@@ -109,6 +112,7 @@ static void show_test_result(const char *file, const int lineno, int res,
 		vsnprintf(buf + sfx_size, buf_size - sfx_size, fmt, va);
 
 	printf("%s\n", buf);
+	fflush(stdout);
 }
 
 static inline bool is_test_empty(const rk_test_t *test)
@@ -138,6 +142,85 @@ static void run_test(rk_test_t *test)
 	if (test->teardown) {
 		session->state = TEST_TEARDOWN;
 		test->teardown();
+	}
+}
+
+static void fork_run_test(rk_test_t *test)
+{
+	int ret;
+	int status = 0;
+	pid_t test_pid;
+	struct timespec start;
+	struct timespec now;
+	struct timespec step = { .tv_sec = 0, .tv_nsec = 1000000L };
+	bool killed = false;
+	size_t timeout;
+
+	assert(test);
+
+	fflush(NULL);
+	test_pid = fork();
+	if (test_pid < 0) {
+		rk_error("fork() error: %s", strerror(errno));
+		return;
+	}
+
+	if (!test_pid) {
+		run_test(test);
+		fflush(NULL);
+		_exit(0);
+	}
+
+	timeout = test->timeout ? test->timeout : 600;
+	if (clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
+		rk_error("clock_gettime() error: %s", strerror(errno));
+		kill(test_pid, SIGKILL);
+		while (waitpid(test_pid, &status, 0) == -1 && errno == EINTR)
+			;
+		return;
+	}
+
+	for (;;) {
+		ret = waitpid(test_pid, &status, WNOHANG);
+		if (ret == test_pid)
+			break;
+
+		if (ret == -1) {
+			if (errno == EINTR)
+				continue;
+			rk_error("waitpid(%i) error: %s",
+				test_pid, strerror(errno));
+			return;
+		}
+
+		if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) {
+			long long sec = (long long)(now.tv_sec - start.tv_sec);
+
+			if (now.tv_nsec < start.tv_nsec)
+				sec--;
+
+			if (sec >= 0 && (size_t)sec >= timeout) {
+				kill(test_pid, SIGKILL);
+				while (waitpid(test_pid, &status, 0) == -1 &&
+				       errno == EINTR)
+					;
+				rk_error("Test timed out after %zu s", timeout);
+				killed = true;
+				break;
+			}
+		}
+
+		nanosleep(&step, NULL);
+	}
+
+	if (!killed) {
+		if (WIFSIGNALED(status)) {
+			rk_error("Test child killed with signal %d",
+				WTERMSIG(status));
+		} else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+			rk_error("Test child exited with status %d",
+				WEXITSTATUS(status));
+		}
 	}
 }
 
@@ -182,7 +265,7 @@ void rk_run_suite(rk_suite_t *suite)
 	if (suite->tests) {
 		for (size_t i = 0; !is_test_empty(&suite->tests[i]); i++) {
 			session->curr_test = &suite->tests[i];
-			run_test(session->curr_test);
+			fork_run_test(session->curr_test);
 		}
 
 		session->curr_test = NULL;

@@ -73,6 +73,8 @@ typedef struct
 	rk_test_func teardown;
 	/** @brief Test to execute. */
 	rk_test_func run;
+	/** @brief Test timeout in seconds (0 uses default 600s). */
+	size_t timeout;
 } rk_test_t;
 
 /**
@@ -87,7 +89,8 @@ typedef struct
  *		{
  *			.run = test1,
  *			.setup = setup1,
- *			.teardown = teardown1
+ *			.teardown = teardown1,
+ *			.timeout = 20,
  *		},
  *		{ .run = test2 },
  *		{ .run = NULL },
